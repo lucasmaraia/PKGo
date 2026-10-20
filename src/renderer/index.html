@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' app-media: data:; connect-src 'self' ws://localhost:*"
+    />
+    <title>PKG Sender</title>
+    <link rel="stylesheet" href="./styles/app.css" />
+  </head>
+  <body>
+    <div class="waves" aria-hidden="true">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="none">
+        <path class="w1" d="M0 560C240 470 420 650 720 560S1200 430 1440 520V900H0Z" />
+        <path class="w2" d="M0 620C300 540 520 700 820 610S1260 520 1440 600V900H0Z" />
+        <path class="w3" d="M0 700C260 650 560 760 860 690S1280 640 1440 690V900H0Z" />
+      </svg>
+    </div>
+
+    <header class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+        <span>PKG Sender</span>
+      </div>
+      <div class="topbar-right">
+        <button class="status" id="ps4Status" type="button" data-action="openSettings" data-i18n-title="status.title">
+          <span class="dot"></span><span class="label"></span>
+        </button>
+        <span class="clock" id="clock"></span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="sidebar">
+        <div class="side-group" role="tablist">
+          <button class="tab" data-view="pc" role="tab">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="12" rx="1" />
+              <path d="M8 20h8M12 16v4" />
+            </svg>
+            <span data-i18n="nav.pc"></span><span class="count" id="countPc"></span>
+          </button>
+          <button class="tab" data-view="ps4" role="tab">
+            <svg viewBox="0 0 24 24"><path d="M3 9h18v6H3zM7 12h.01M17 12h.01" /></svg>
+            <span data-i18n="nav.ps4"></span><span class="count" id="countPs4"></span>
+          </button>
+        </div>
+        <div class="side-group" id="filters">
+          <h4 data-i18n="nav.show"></h4>
+          <button class="chip active" data-kind="all" data-i18n="filter.all"></button>
+          <button class="chip" data-kind="game" data-i18n="filter.game"></button>
+          <button class="chip" data-kind="patch" data-i18n="filter.patch"></button>
+          <button class="chip" data-kind="dlc" data-i18n="filter.dlc"></button>
+          <button class="chip" data-kind="app" data-i18n="filter.app"></button>
+        </div>
+        <div class="side-group side-bottom">
+          <button class="tab" data-action="openSettings">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+              />
+            </svg>
+            <span data-i18n="nav.settings"></span>
+          </button>
+        </div>
+      </nav>
+
+      <main>
+        <section id="activity" class="activity" hidden></section>
+
+        <div class="view-head">
+          <div>
+            <h1 id="viewTitle"></h1>
+            <p id="summary"></p>
+          </div>
+          <div class="actions" data-for="ps4" hidden>
+            <button class="btn" data-action="refreshConsole">
+              <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" /></svg>
+              <span data-i18n="console.refresh"></span>
+            </button>
+          </div>
+          <div class="actions" data-for="pc">
+            <button class="btn icon-only" data-action="rescan" data-i18n-title="library.rescan">
+              <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" /></svg>
+            </button>
+            <button class="btn" data-action="addFolders">
+              <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z" /></svg>
+              <span data-i18n="library.addFolders"></span>
+            </button>
+            <button class="btn" data-action="addFiles">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+              <span data-i18n="library.addFiles"></span>
+            </button>
+          </div>
+        </div>
+
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="m16 16 4 4" />
+          </svg>
+          <input id="search" type="search" data-i18n-placeholder="library.search" autocomplete="off" />
+        </label>
+
+        <section id="grid" class="grid"></section>
+        <section id="consoleGrid" class="grid" hidden></section>
+        <section id="consoleStatus" class="empty" hidden></section>
+        <section id="empty" class="empty" hidden>
+          <h2 data-i18n="library.emptyTitle"></h2>
+          <p data-i18n="library.emptyText"></p>
+          <button class="btn" data-action="addFolders" data-i18n="library.chooseFolders"></button>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="details" class="panel">
+      <form method="dialog"><div id="detailsBody"></div></form>
+    </dialog>
+
+    <dialog id="settings" class="panel wide">
+      <form method="dialog" id="settingsForm">
+        <header class="panel-head">
+          <h2 data-i18n="settings.title"></h2>
+          <button class="btn icon-only" value="close" data-i18n-title="common.close">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+
+        <section class="settings-section">
+          <h3 data-i18n="settings.console"></h3>
+          <div class="field-row">
+            <label class="field grow"
+              ><span data-i18n="settings.ip"></span>
+              <input name="ps4Ip" placeholder="192.168.0.10" inputmode="decimal" autocomplete="off" />
+            </label>
+            <button class="btn" type="button" data-action="saveIp" data-i18n="common.save"></button>
+          </div>
+          <div class="field-row">
+            <button class="btn" type="button" data-action="discover" id="discoverBtn">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="m16 16 4 4" />
+              </svg>
+              <span data-i18n="settings.discover"></span>
+            </button>
+          </div>
+          <ul class="discovered" id="discovered"></ul>
+          <p class="note" data-i18n="settings.goldhenNote"></p>
+          <details class="advanced">
+            <summary data-i18n="settings.advanced"></summary>
+            <div class="field-row">
+              <label class="field"
+                ><span data-i18n="settings.ftpPort"></span>
+                <input name="ftpPort" type="number" min="1" max="65535" />
+              </label>
+              <button class="btn" type="button" data-action="saveFtpPort" data-i18n="common.save"></button>
+            </div>
+            <p class="note" id="lanInfo"></p>
+          </details>
+        </section>
+
+        <section class="settings-section">
+          <h3 data-i18n="settings.folders"></h3>
+          <ul class="folders" id="folderList"></ul>
+          <div class="field-row">
+            <button class="btn" type="button" data-action="addFolders">
+              <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z" /></svg>
+              <span data-i18n="library.addFolders"></span>
+            </button>
+            <button class="btn" type="button" data-action="rescan" data-i18n="library.rescan"></button>
+            <span class="note" id="scanInfo"></span>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3 data-i18n="settings.language"></h3>
+          <select name="language" id="languageSelect"></select>
+        </section>
+
+        <section class="settings-section about">
+          <h3 data-i18n="settings.about"></h3>
+          <p class="note" id="aboutText"></p>
+        </section>
+      </form>
+    </dialog>
+
+    <dialog id="uninstall" class="band">
+      <form method="dialog" id="uninstallForm">
+        <div class="band-inner">
+          <h2 data-i18n="uninstall.title"></h2>
+          <div class="uninstall-item" id="uninstallItem"></div>
+          <div class="choices" id="uninstallChoices"></div>
+          <p class="note" data-i18n="uninstall.note"></p>
+          <p class="note warn" id="uninstallOffline" hidden data-i18n="uninstall.offline"></p>
+          <footer>
+            <button class="btn" value="cancel" data-i18n="common.cancel"></button>
+            <button class="btn" id="confirmUninstall" type="button"></button>
+          </footer>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

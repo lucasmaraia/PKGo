@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {"composite": true, "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": []},
+  "include": ["src/renderer/**/*", "src/shared/**/*", "src/preload/*.d.ts"]
+}

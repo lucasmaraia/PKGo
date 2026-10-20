@@ -1,0 +1,54 @@
+name: Release
+
+# Push a tag like v2.0.0 to build the payloads from source, package the app for
+# Windows and Linux and attach everything to a draft GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  payloads:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y gcc make yasm git file python3 binutils
+      - run: bash payloads/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payloads
+          path: resources/payloads/*.bin
+
+  package:
+    needs: payloads
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win
+          - os: ubuntu-latest
+            target: --linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: payloads
+          path: resources/payloads
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx electron-builder ${{ matrix.target }} --publish never
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb

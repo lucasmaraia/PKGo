@@ -1,2 +1,5 @@
-config.json
 node_modules/
+out/
+dist/
+config.json
+*.log

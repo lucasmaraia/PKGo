@@ -1,75 +1,81 @@
 # PKG Sender
 
-Envie PKGs do PC para o PS4 pela rede, com uma interface amigável: capa,
-título, CUSA, versão e tipo de cada pacote, fila de instalação e progresso
-com velocidade e tempo restante.
+Install and manage PS4 packages over your local network with **GoldHEN**, from Windows or Linux.
+No installer app has to be open on the console.
 
-Usa a mesma API do *PS4 Remote PKG Sender*: o PS4 baixa o arquivo diretamente
-deste PC pelo **Remote Package Installer** (porta 12800).
+[Português (Brasil)](README.pt-BR.md)
 
-## Requisitos
+## Features
 
-- Windows com [Node.js](https://nodejs.org) 18 ou mais novo (sem dependências extras).
-- PS4 com GoldHEN e o **Remote Package Installer** aberto.
-- PC e PS4 na mesma rede.
+- **Library on your PC**: add any number of folders (subfolders included) and see each PKG with its cover, title, version and type (game, update, DLC or app/homebrew).
+- **One-click install**: PKG Sender serves the file over your network and the PS4 downloads it in the background, with progress, speed and time left. Packages queue up and install one after another.
+- **Console view**: lists the games and apps installed on the PS4, with version, update, DLC count and space used.
+- **Delete from the PS4**: remove a game, or only its update, using the system uninstaller. Saved data is kept.
+- **Finds your PS4** on the network automatically, or you can type its IP.
+- **English, Español and Português (Brasil)**, following your system language by default.
 
-## Como usar
+## Requirements
 
-1. Na primeira vez, dê dois cliques em **`Criar atalho.cmd`**. Ele cria o atalho
-   **PKG Sender** na Área de Trabalho e no Menu Iniciar. Depois, abra o app por ele:
-   o PKG Sender abre em janela própria, sem barra do navegador e sem janela de console.
-   (O `Iniciar.cmd` continua disponível: abre no navegador e mostra o console.)
-2. Na primeira vez, informe o IP do PS4 (clique no indicador de status no topo).
-3. Clique em **Adicionar pasta** (ou **Adicionar PKG**) e escolha onde estão seus pacotes.
-4. No PS4, abra o Remote Package Installer.
-5. Clique em **Instalar** no card do jogo. Acompanhe o progresso no topo da tela.
+- A PS4 with **GoldHEN** loaded, with these enabled in _Settings > GoldHEN > Server Settings_:
+  - **FTP server** (port 2121), used to read what is installed;
+  - **BinLoader server** (port 9090), used to install and delete.
+- The PC and the PS4 on the same local network.
 
-No modo janela, o servidor fecha sozinho cerca de um minuto depois que você fecha
-a janela, mas só quando não há instalação em andamento: fechar a janela no meio de
-um envio não interrompe o PS4. No modo `Iniciar.cmd`, mantenha a janela preta aberta. Na primeira execução, o Windows pode
-pedir permissão de rede para o Node.js: permita em **redes privadas**.
+## Install
 
-## Recursos
+Download the latest release:
 
-- Aba **No PS4**: lista jogos e apps instalados no console, com capa, versão,
-  atualização instalada, quantidade de DLCs e espaço ocupado. Lida pelo FTP do
-  GoldHEN (porta 2121), sem precisar do Remote Package Installer.
-- **Excluir** jogos ou só a atualização direto da aba **No PS4**. Usa o desinstalador
-  do sistema (pelo Remote Package Installer, que precisa estar aberto), mantém os
-  dados salvos e confere na lista do console se a exclusão aconteceu de fato.
-- Na aba **No PC**, o selo **Instalado** mostra a versão presente no console, e
-  atualizações mais novas que a do PS4 aparecem destacadas.
-- Lê `param.sfo` e `icon0.png`/`pic1.png` direto do PKG, sem carregar o arquivo inteiro.
-- Título em português quando o PKG tiver (`TITLE_17`/`TITLE_07`).
-- Filtros por Jogos, Atualizações, DLC e Apps; busca por nome ou CUSA.
-- Fila sequencial: adicione vários pacotes e deixe instalando.
-- **Sem abrir o Remote Package Installer**: com `payload/dpi.bin` gerado (veja
-  `payload/README.md`), quando o app está fechado o PKG Sender instala por um payload
-  enviado ao BinLoader do GoldHEN (porta 9090). Com `payload/uninstall.bin`, a exclusão de jogos
-  e atualizações também funciona assim.
-- Escolhe automaticamente o endereço do PC na mesma rede do PS4 e ignora adaptadores virtuais (WSL, Hyper-V, VPN).
+| System  | File                                                                  |
+| ------- | --------------------------------------------------------------------- |
+| Windows | `PKG Sender-Setup-x.y.z.exe` (installer) or `-Portable-` (no install) |
+| Linux   | `pkg-sender-x.y.z-x86_64.AppImage` or `pkg-sender_x.y.z_amd64.deb`    |
 
-## Configuração
+On first launch, PKG Sender looks for your PS4. If your firewall asks, allow it on **private networks**: the console downloads packages from your PC.
 
-Fica em `config.json` (criado automaticamente):
+## How it works
 
-| Campo | Padrão | Uso |
-| --- | --- | --- |
-| `ps4Ip` | — | IP do PS4 |
-| `rpiPort` | `12800` | Porta do Remote Package Installer |
-| `ftpPort` | `2121` | Porta do FTP do GoldHEN (lista de jogos instalados) |
-| `serverPort` | `8686` | Porta da interface e do servidor de arquivos |
-| `folders` | `[]` | Pastas da biblioteca (busca até 4 níveis) |
+- **Install**: PKG Sender sends a small payload to GoldHEN's BinLoader. It registers the download with the PS4's own download service, pointing at PKG Sender's file server. The console then downloads the PKG straight from your PC.
+- **Delete**: another payload calls the system uninstaller and reports the result back.
+- **Console list**: read over GoldHEN's FTP server.
 
-## Segurança
+The payloads live in [`payloads/`](payloads/README.md), with their sources and build script.
 
-A interface e a API só respondem ao próprio PC (`localhost`). Para outros
-dispositivos da rede, o servidor só entrega os PKGs da biblioteca, pelo
-identificador interno; nenhuma outra pasta ou arquivo do PC fica acessível.
+## Development
 
-## Desenvolvimento
+Requires Node.js 22.12 or newer.
 
-```powershell
-npm test       # testes do leitor de PKG e da API
-npm start      # inicia e abre o navegador
+```sh
+npm install
+npm run dev          # run with hot reload
+npm test             # unit tests (vitest)
+npm run lint         # ESLint
+npm run typecheck    # TypeScript
+npm run dist:win     # Windows installer + portable (dist/)
+npm run dist:linux   # AppImage + .deb (dist/, run on Linux)
+npm run payloads     # rebuild the payloads (Linux/WSL, see payloads/README.md)
 ```
+
+Project layout:
+
+```
+src/core       PS4 logic in plain Node (no Electron): PKG reader, library, FTP, payloads, install queue
+src/main       Electron main process: window, IPC, native dialogs, tray
+src/preload    Typed bridge exposed to the window (window.api)
+src/renderer   Interface (TypeScript, no framework)
+src/shared     Types and translations shared by all of the above
+payloads       Sources and build script of the PS4 payloads
+resources      Built payloads and the app icon
+tests          Unit tests
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) to help, including how to add a language.
+
+## Credits
+
+- Install payload: [DirectPackageInstaller](https://github.com/marcussacana/DirectPackageInstaller) by marcussacana (GPL-3.0).
+- Uninstaller function names as used by [Itemzflow](https://github.com/LightningMods/Itemzflow) (GPL-3.0).
+- [GoldHEN](https://github.com/GoldHEN/GoldHEN) by SiSTR0 and contributors.
+
+## License
+
+[GPL-3.0](LICENSE). PKG Sender is not affiliated with Sony Interactive Entertainment. Use it only with content you are entitled to.
