@@ -1,0 +1,12 @@
+{
+  "name": "ps4-pkg-sender",
+  "version": "1.0.0",
+  "description": "Envie PKGs para o PS4 pela rede com uma interface amigável (Remote Package Installer).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs --open",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
