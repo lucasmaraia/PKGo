@@ -28,7 +28,7 @@ Download the latest release:
 | System  | File                                                                  |
 | ------- | --------------------------------------------------------------------- |
 | Windows | `PKG Sender-Setup-x.y.z.exe` (installer) or `-Portable-` (no install) |
-| Linux   | `pkg-sender-x.y.z-x86_64.AppImage` or `pkg-sender_x.y.z_amd64.deb`    |
+| Linux   | `pkg-sender-x.y.z-x86_64.AppImage` or `pkg-sender-x.y.z-amd64.deb`    |
 
 On first launch, PKG Sender looks for your PS4. If your firewall asks, allow it on **private networks**: the console downloads packages from your PC.
 

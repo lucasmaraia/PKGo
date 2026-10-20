@@ -2,6 +2,8 @@ import {translate, translateError, type MessageKey} from '@shared/i18n';
 import type {ErrorInfo, Language} from '@shared/types';
 
 let language: Language = 'en';
+/** Whether the static page has been translated yet (it starts with empty labels). */
+let applied = false;
 
 export const currentLanguage = (): Language => language;
 
@@ -19,7 +21,8 @@ export function errorText(error: unknown): string {
  * data-i18n (text), data-i18n-placeholder and data-i18n-title.
  */
 export function setLanguage(next: Language): boolean {
-  if (next === language && document.documentElement.lang === next) return false;
+  if (applied && next === language) return false;
+  applied = true;
   language = next;
   document.documentElement.lang = next;
   for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]')) el.textContent = t(el.dataset.i18n!);
