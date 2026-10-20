@@ -176,13 +176,15 @@ strong {
 .layout {
   display: flex;
   gap: clamp(20px, 3vw, 44px);
-  padding: 12px clamp(16px, 3vw, 36px) 64px;
+  /* Top bar (56) + 12 + sidebar (100vh - 92) + 24 = exactly one screen: no scrollbar when empty. */
+  padding: 12px clamp(16px, 3vw, 36px) 24px;
   max-width: 1600px;
   margin: 0 auto;
 }
 main {
   flex: 1;
   min-width: 0;
+  padding-bottom: 40px;
 }
 
 .sidebar {
