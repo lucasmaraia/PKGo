@@ -26,8 +26,6 @@ import {PkgFileServer} from './server/PkgFileServer';
 
 export interface AppCoreOptions {
   configFile: string;
-  /** A 1.x config.json to import on first run. */
-  legacyConfigFile?: string;
   /** Folder with install.bin and uninstall.bin. */
   payloadDir: string;
   systemLanguage: Language;
@@ -49,7 +47,7 @@ export class AppCore extends EventEmitter<{change: []}> {
   constructor(private readonly options: AppCoreOptions) {
     super();
     const changed = () => this.emit('change');
-    this.config = new ConfigStore(options.configFile, options.legacyConfigFile);
+    this.config = new ConfigStore(options.configFile);
     this.library = new LibraryService(() => this.config.get(), changed);
     this.console = new ConsoleService(
       () => ({host: this.config.get().ps4Ip, port: this.config.get().ftpPort}),
@@ -91,7 +89,7 @@ export class AppCore extends EventEmitter<{change: []}> {
 
   async stop(): Promise<void> {
     if (this.statusTimer) clearInterval(this.statusTimer);
-    this.installPayload.close();
+    await this.installPayload.close();
     await this.server.close();
   }
 
@@ -265,8 +263,8 @@ export class AppCore extends EventEmitter<{change: []}> {
     this.queue.clearFinished();
   }
 
-  refreshConsole(): Promise<void> {
-    return this.console.refresh();
+  async refreshConsole(): Promise<void> {
+    await this.console.refresh();
   }
 
   /**
@@ -289,9 +287,10 @@ export class AppCore extends EventEmitter<{change: []}> {
       });
     }
     // Confirm on the console: the request alone does not prove it happened.
+    // If the list cannot be read now, trust the uninstaller's success code.
     await new Promise(r => setTimeout(r, 1500));
     await this.console.settled();
-    await this.console.refresh();
+    if (!(await this.console.refresh())) return;
     const after = this.console.find(titleId);
     if (what === 'patch' ? after?.patchVersion : after) throw new AppError('uninstallNotApplied');
   }

@@ -30,7 +30,7 @@ nsis:
 portable:
   artifactName: ${productName}-Portable-${version}.${ext}
 linux:
-  icon: build/icon.png
+  icon: resources/icon.png
   category: Utility
   synopsis: Install PS4 packages over the network with GoldHEN
   maintainer: lucasmaraia

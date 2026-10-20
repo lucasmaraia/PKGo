@@ -36,18 +36,12 @@ const port = (value: unknown, fallback: number) =>
 const strings = (value: unknown) =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 
-/** Validates a parsed file. Accepts the 1.x format, where folders were plain paths. */
+/** Validates a parsed file, dropping what is malformed. */
 export function normalize(raw: unknown): Config {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const folders = (Array.isArray(r.folders) ? r.folders : [])
-    .map((f): FolderEntry | null => {
-      if (typeof f === 'string') return {path: f, recursive: true};
-      if (f && typeof f === 'object' && typeof (f as FolderEntry).path === 'string') {
-        return {path: (f as FolderEntry).path, recursive: (f as FolderEntry).recursive !== false};
-      }
-      return null;
-    })
-    .filter((f): f is FolderEntry => !!f);
+    .filter((f): f is FolderEntry => !!f && typeof f === 'object' && typeof (f as FolderEntry).path === 'string')
+    .map(f => ({path: f.path, recursive: f.recursive !== false}));
   return {
     ps4Ip: typeof r.ps4Ip === 'string' && isIpv4(r.ps4Ip.trim()) ? r.ps4Ip.trim() : '',
     ftpPort: port(r.ftpPort, DEFAULTS.ftpPort),
@@ -67,25 +61,12 @@ function readJson(file: string): unknown {
 export class ConfigStore {
   private data: Config;
 
-  /**
-   * @param file where settings live
-   * @param legacyFile a 1.x config.json to import when `file` does not exist yet
-   */
-  constructor(
-    private readonly file: string,
-    legacyFile?: string,
-  ) {
+  constructor(private readonly file: string) {
     let raw: unknown = {};
     try {
       raw = readJson(file);
     } catch {
-      if (legacyFile && fs.existsSync(legacyFile)) {
-        try {
-          raw = readJson(legacyFile);
-        } catch {
-          // unreadable legacy file: start fresh
-        }
-      }
+      // missing or unreadable: start with defaults
     }
     this.data = normalize(raw);
     if (!fs.existsSync(file)) this.save();

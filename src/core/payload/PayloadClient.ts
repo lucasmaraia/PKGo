@@ -168,8 +168,8 @@ export class InstallPayload {
   }
 
   /** Lets a waiting payload exit cleanly instead of failing on a dropped connection. */
-  close(): void {
-    for (const sock of this.idle.splice(0)) sock.end(u32(0));
+  async close(): Promise<void> {
+    await Promise.all(this.idle.splice(0).map(sock => new Promise<void>(resolve => sock.end(u32(0), () => resolve()))));
     this.server?.close();
     this.server = null;
   }

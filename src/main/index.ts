@@ -1,8 +1,8 @@
 // Electron main process: one window, the core services and the IPC bridge.
 import path from 'node:path';
-import {app, BrowserWindow, dialog, Menu, nativeImage, shell, Tray} from 'electron';
+import {app, BrowserWindow, dialog, Menu, nativeImage, Notification, shell, Tray} from 'electron';
 import {AppCore} from '@core/AppCore';
-import {matchLanguage, translate} from '@shared/i18n';
+import {matchLanguage, translate, translateError} from '@shared/i18n';
 import {registerIpc} from './ipc';
 import {registerMediaProtocol, registerMediaScheme} from './media';
 
@@ -12,6 +12,7 @@ let core: AppCore;
 let window: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let quitting = false;
+let stopped = false;
 
 const t = (key: string, params?: Record<string, string | number>) => translate(core.language, key, params);
 
@@ -108,8 +109,6 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(async () => {
     core = new AppCore({
       configFile: path.join(app.getPath('userData'), 'config.json'),
-      // 1.x kept config.json next to server.mjs; import it when running from source.
-      legacyConfigFile: app.isPackaged ? undefined : path.join(app.getAppPath(), 'config.json'),
       payloadDir: app.isPackaged
         ? path.join(process.resourcesPath, 'payloads')
         : path.join(app.getAppPath(), 'resources', 'payloads'),
@@ -124,20 +123,31 @@ if (!app.requestSingleInstanceLock()) {
       app.exit(1);
       return;
     }
-    // Running in the tray only for a download: leave once it is over.
+    // Running in the tray only for a download: say how it went, then leave.
     core.on('change', () => {
-      if (tray && !core.busy && window && !window.isVisible()) {
-        quitting = true;
-        app.quit();
+      if (!tray || core.busy || !window || window.isVisible()) return;
+      const last = [...core.queue.jobs].sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0))[0];
+      if (last && Notification.isSupported()) {
+        const body =
+          last.state === 'done'
+            ? t('jobs.doneToast', {title: last.title})
+            : `${last.title}: ${last.error ? translateError(core.language, last.error) : ''}`;
+        new Notification({title: 'PKG Sender', body, icon: ICON}).show();
       }
+      quitting = true;
+      app.quit();
     });
     window = createWindow();
   });
 
   app.on('window-all-closed', () => app.quit());
 
-  app.on('before-quit', () => {
+  // Release the payload waiting on the PS4 and the PKG server before leaving.
+  app.on('before-quit', event => {
     quitting = true;
-    void core?.stop();
+    if (stopped || !core) return;
+    event.preventDefault();
+    stopped = true;
+    void core.stop().finally(() => app.quit());
   });
 }

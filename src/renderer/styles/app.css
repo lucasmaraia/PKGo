@@ -312,15 +312,6 @@ main {
   opacity: 0.4;
   cursor: default;
 }
-.btn.primary {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #fff;
-  color: #062a86;
-  font-weight: 600;
-}
-.btn.primary:hover:not(:disabled) {
-  background: #fff;
-}
 .btn.icon-only {
   padding: 8px 10px;
 }

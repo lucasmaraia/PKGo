@@ -179,7 +179,7 @@ function bindEvents(): void {
 async function main(): Promise<void> {
   initDetails();
   initUninstall();
-  initSettings(() => undefined);
+  initSettings();
   bindEvents();
   startClock();
   applyState(await api.getState());

@@ -16,13 +16,15 @@ const field = (name: string) => form().elements.namedItem(name) as HTMLInputElem
 let discovered: DiscoveredConsole[] | null = null;
 let discovering = false;
 let foldersKey = '';
+let languageKey = '';
+let discoveredKey = '';
 
 export function openSettings({discover = false} = {}): void {
   const state = requireState();
   field('ps4Ip').value = state.config.ps4Ip;
   field('ftpPort').value = String(state.config.ftpPort);
-  field('language').value = state.config.language || 'auto';
   foldersKey = '';
+  languageKey = '';
   renderSettings();
   if (!dialog().open) dialog().showModal();
   if (discover) void runDiscovery();
@@ -32,12 +34,16 @@ export function openSettings({discover = false} = {}): void {
 export function renderSettings(): void {
   if (!store.state) return;
   const state = store.state;
-  const select = $<HTMLSelectElement>('#languageSelect');
-  const current = select.value || state.config.language || 'auto';
-  select.innerHTML =
-    `<option value="auto">${esc(t('settings.languageAuto'))}</option>` +
-    LANGUAGES.map(l => `<option value="${l}">${esc(LANGUAGE_NAMES[l])}</option>`).join('');
-  select.value = current;
+  // Rebuilding the select while it is open would close it: only on change.
+  const configured = state.config.language || 'auto';
+  if (languageKey !== `${state.language}:${configured}`) {
+    languageKey = `${state.language}:${configured}`;
+    const select = $<HTMLSelectElement>('#languageSelect');
+    select.innerHTML =
+      `<option value="auto">${esc(t('settings.languageAuto'))}</option>` +
+      LANGUAGES.map(l => `<option value="${l}">${esc(LANGUAGE_NAMES[l])}</option>`).join('');
+    select.value = configured;
+  }
 
   const folders = state.config.folders;
   const key = JSON.stringify([folders, state.scan.missing, state.language]);
@@ -73,11 +79,15 @@ function renderDiscovered(): void {
   const button = $<HTMLButtonElement>('#discoverBtn');
   button.disabled = discovering;
   $('span', button).textContent = t(discovering ? 'settings.discovering' : 'settings.discover');
+  const current = store.state?.config.ps4Ip;
+  // Recreating the buttons on every state update could swallow a click.
+  const key = JSON.stringify([discovered, current, store.state?.language]);
+  if (key === discoveredKey) return;
+  discoveredKey = key;
   if (discovered === null) {
     list.innerHTML = '';
     return;
   }
-  const current = store.state?.config.ps4Ip;
   list.innerHTML = discovered.length
     ? discovered
         .map(c => {
@@ -128,13 +138,13 @@ export async function saveFtpPort(): Promise<void> {
   }
 }
 
-export function initSettings(onLanguage: (language: Language | null) => void): void {
+export function initSettings(): void {
   $<HTMLSelectElement>('#languageSelect').addEventListener('change', async e => {
     const value = (e.target as HTMLSelectElement).value;
     const language = value === 'auto' ? null : (value as Language);
     try {
+      // The new state comes back from the main process and re-translates the page.
       await window.api.setConfig({language});
-      onLanguage(language);
     } catch (err) {
       toast(errorText(err), 'error');
     }

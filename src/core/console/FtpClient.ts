@@ -1,6 +1,5 @@
 // Minimal passive-mode FTP client for the GoldHEN FTP server (anonymous, binary).
 import net from 'node:net';
-import {AppError} from '../errors';
 
 interface Reply {
   code: number;
@@ -206,5 +205,3 @@ export function probeFtp(host: string, port: number, timeout = 2500): Promise<bo
     });
   });
 }
-
-export const ftpUnavailable = (detail: string) => new AppError('consoleFtp', {detail});

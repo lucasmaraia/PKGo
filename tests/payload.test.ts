@@ -108,7 +108,7 @@ describe('InstallPayload', () => {
         iconLength: 3,
       });
     } finally {
-      payload.close();
+      await payload.close();
       fs.rmSync(file, {force: true});
     }
   });
@@ -127,7 +127,7 @@ describe('InstallPayload', () => {
         payload.install('127.0.0.1', '127.0.0.1', {url: 'u', name: 'n', contentId: 'c', type: 'PS4GD', size: 1}),
       ).rejects.toMatchObject({code: 'binloaderUnavailable'});
     } finally {
-      payload.close();
+      await payload.close();
       fs.rmSync(file, {force: true});
     }
   });

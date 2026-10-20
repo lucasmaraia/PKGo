@@ -114,7 +114,10 @@ export class ConsoleService {
   private raw: RawConsoleItem[] = [];
   private cache = new Map<string, TitleMeta>();
   readonly icons = new Map<string, Buffer>();
-  private loading: Promise<void> | null = null;
+  private loading: Promise<boolean> | null = null;
+  /** Bumped by reset(): results of reads started before it are dropped. */
+  private generation = 0;
+  private loadingGeneration = -1;
   private status: Omit<ConsoleState, 'items'> = {
     state: 'idle',
     refreshing: false,
@@ -144,6 +147,7 @@ export class ConsoleService {
 
   /** Forgets everything, e.g. when the console IP changes. */
   reset(): void {
+    this.generation++;
     this.raw = [];
     this.cache.clear();
     this.icons.clear();
@@ -156,35 +160,51 @@ export class ConsoleService {
     await this.loading;
   }
 
-  refresh(): Promise<void> {
+  /** Reads the console list again; resolves to whether it succeeded. */
+  refresh(): Promise<boolean> {
     const {host, port} = this.target();
-    if (!host) return Promise.resolve();
-    this.loading ??= (async () => {
+    if (!host) return Promise.resolve(false);
+    // A read for an older console (before reset) does not count: start a new one.
+    if (this.loading && this.loadingGeneration === this.generation) return this.loading;
+    const generation = this.generation;
+    const current = () => generation === this.generation;
+    this.loadingGeneration = generation;
+    const loading = (async (): Promise<boolean> => {
       this.status.state = this.status.updatedAt ? 'ready' : 'loading';
       this.status.refreshing = true;
       this.status.error = null;
       this.onChange();
       try {
-        this.raw = await readConsoleLibrary({
+        const items = await readConsoleLibrary({
           host,
           port,
           cache: this.cache,
           icons: this.icons,
           onProgress: (done, total) => {
+            if (!current()) return;
             Object.assign(this.status, {done, total});
             this.onChange();
           },
         });
+        if (!current()) return false;
+        this.raw = items;
         Object.assign(this.status, {state: 'ready', updatedAt: Date.now()});
+        return true;
       } catch (e) {
+        if (!current()) return false;
         this.status.error = new AppError('consoleFtp', {detail: toErrorInfo(e).params?.detail ?? String(e)}).toInfo();
         if (!this.status.updatedAt) this.status.state = 'error';
+        return false;
       } finally {
-        this.status.refreshing = false;
-        this.loading = null;
-        this.onChange();
+        // Only the latest read clears the busy state; an outdated one just ends.
+        if (this.loadingGeneration === generation) {
+          this.loading = null;
+          this.status.refreshing = false;
+          this.onChange();
+        }
       }
     })();
-    return this.loading;
+    this.loading = loading;
+    return loading;
   }
 }

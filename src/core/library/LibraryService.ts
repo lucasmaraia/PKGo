@@ -75,6 +75,7 @@ export async function findPkgs(
 export class LibraryService {
   private entries = new Map<string, LibraryEntry>();
   private scanning: Promise<void> | null = null;
+  private queued: Promise<void> | null = null;
   readonly scan: ScanState = {active: false, folders: 0, found: 0, missing: []};
 
   constructor(
@@ -95,9 +96,19 @@ export class LibraryService {
     this.onChange();
   }
 
-  /** Rescans all sources; concurrent calls share the same scan. */
+  /**
+   * Rescans all sources. A call during a scan runs one more scan right after
+   * it (sources may have changed); calls made meanwhile share that one.
+   */
   rescan(): Promise<void> {
-    this.scanning ??= this.doScan().finally(() => {
+    if (this.scanning) {
+      this.queued ??= this.scanning.then(() => {
+        this.queued = null;
+        return this.rescan();
+      });
+      return this.queued;
+    }
+    this.scanning = this.doScan().finally(() => {
       this.scanning = null;
       this.scan.active = false;
       this.onChange();

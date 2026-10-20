@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v2.0.0 to build the payloads from source, package the app for
-# Windows and Linux and attach everything to a draft GitHub release.
+# Windows and Linux and attach everything to one draft GitHub release.
 on:
   push:
     tags: ['v*']
@@ -45,10 +45,24 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npx electron-builder ${{ matrix.target }} --publish never
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          draft: true
-          files: |
+          name: app-${{ matrix.os }}
+          path: |
             dist/*.exe
             dist/*.AppImage
             dist/*.deb
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: app-*
+          merge-multiple: true
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: dist/*

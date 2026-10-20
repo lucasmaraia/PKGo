@@ -42,12 +42,12 @@ describe('lan helpers', () => {
 });
 
 describe('config normalize', () => {
-  it('imports the 1.x format and drops invalid values', () => {
+  it('keeps valid values and drops malformed ones', () => {
     const c = normalize({
       ps4Ip: '192.168.0.43',
-      rpiPort: 12800,
+      unknown: true,
       ftpPort: 'x',
-      folders: ['C:\\PKGs', {path: '/mnt/pkgs', recursive: false}, 42],
+      folders: [{path: 'C:\\PKGs'}, {path: '/mnt/pkgs', recursive: false}, 'not-an-entry', 42],
       files: ['a.pkg', 1],
       hidden: ['abc'],
       language: 'fr',

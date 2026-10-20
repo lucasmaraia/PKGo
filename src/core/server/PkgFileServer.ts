@@ -50,8 +50,12 @@ export class PkgFileServer {
     return (this.server.address() as net.AddressInfo | null)?.port ?? 0;
   }
 
+  /** Stops serving, cutting downloads in progress (closing waits for none). */
   close(): Promise<void> {
-    return new Promise(resolve => this.server.close(() => resolve()));
+    return new Promise(resolve => {
+      this.server.close(() => resolve());
+      this.server.closeAllConnections();
+    });
   }
 
   private handle(req: http.IncomingMessage, res: http.ServerResponse): void {

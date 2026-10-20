@@ -73,3 +73,20 @@ describe('LibraryService', () => {
     expect(service.items[0]?.error?.code).toBe('pkgTruncated');
   });
 });
+
+describe('LibraryService.rescan', () => {
+  it('scans again when sources change during a scan', async () => {
+    const first = tree();
+    const second = tree();
+    const folders = [{path: first, recursive: false}];
+    const service = new LibraryService(
+      () => ({folders: [...folders], files: [], hidden: []}),
+      () => {},
+    );
+    const running = service.rescan();
+    // A folder added while the first scan runs must be picked up.
+    folders.push({path: second, recursive: false});
+    await Promise.all([running, service.rescan()]);
+    expect(service.items.map(i => path.dirname(i.path)).sort()).toEqual([first, second].sort());
+  });
+});
