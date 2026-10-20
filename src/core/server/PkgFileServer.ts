@@ -59,7 +59,9 @@ export class PkgFileServer {
   }
 
   private handle(req: http.IncomingMessage, res: http.ServerResponse): void {
-    const match = /^\/pkg\/([0-9a-f]{12})\.pkg$/.exec(req.url || '');
+    // Match the path only: the PS4 download service adds query parameters.
+    const {pathname} = new URL(req.url || '/', 'http://localhost');
+    const match = /^\/pkg\/([0-9a-f]{12})\.pkg$/.exec(pathname);
     const file = match && (req.method === 'GET' || req.method === 'HEAD') ? this.lookup(match[1]!) : undefined;
     if (!file) {
       res.writeHead(404);
