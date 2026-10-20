@@ -84,7 +84,7 @@
   "jobs.transferred": "{done} de {total}",
   "jobs.eta": "faltam {time}",
   "jobs.waitingPs4": "Aguardando o PS4 começar o download",
-  "jobs.doneToast": "{title}: instalação concluída.",
+  "jobs.doneToast": "{title} foi enviado ao PS4, que conclui a instalação em instantes.",
   "jobs.ps4NotReady": "O PS4 não está respondendo agora. O pacote entrou na fila mesmo assim.",
 
   "details.installed": "Instalado no PS4 (v{version})",
@@ -102,6 +102,9 @@
   "details.gameVersion": "Versão do jogo",
   "details.update": "Atualização",
   "details.dlcs": "DLCs",
+  "details.storage": "Armazenamento",
+  "storage.internal": "Interno",
+  "storage.external": "Armazenamento estendido",
   "details.used": "Espaço ocupado",
 
   "uninstall.title": "Excluir do PS4",

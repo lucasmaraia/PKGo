@@ -13,8 +13,8 @@ export interface InstallContext {
   /** Console IP, this PC's LAN IP and the PKG server port, read when a job starts. */
   network: () => {ps4Ip: string; pcIp: string | null; port: number};
   onChange: () => void;
-  /** Called after a package finished downloading. */
-  onInstalled: () => void;
+  /** Called once the console has downloaded the whole package (it still has to install it). */
+  onDownloaded: (entry: LibraryEntry) => void;
 }
 
 /** The console has to start downloading within this time, and may not stall for longer. */
@@ -140,7 +140,6 @@ export class InstallQueue {
       if (done >= entry.size) break;
     }
     Object.assign(job, {state: 'done', transferred: job.total, speed: 0, eta: 0, finishedAt: Date.now()});
-    // Give the console a moment to register the package before listing it.
-    setTimeout(this.ctx.onInstalled, 8000);
+    this.ctx.onDownloaded(entry);
   }
 }

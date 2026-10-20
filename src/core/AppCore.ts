@@ -33,6 +33,12 @@ export interface AppCoreOptions {
 
 const STATUS_INTERVAL = 5000;
 
+/** The PS4 keeps each DLC in a folder named after the end of its content ID (UP0000-CUSA00000_00-<label>). */
+export const dlcLabel = (contentId: string | null | undefined): string | null =>
+  /^[A-Z]{2}\d{4}-[A-Z]{4}\d{5}_\d{2}-([A-Z0-9]{16})$/.exec(contentId || '')?.[1] ?? null;
+/** Seconds between console re-reads after a download (about five minutes in total). */
+const WATCH_DELAYS = [5, 10, 15, 20, 30, 30, 60, 60, 90];
+
 export class AppCore extends EventEmitter<{change: []}> {
   readonly config: ConfigStore;
   readonly library: LibraryService;
@@ -66,7 +72,7 @@ export class AppCore extends EventEmitter<{change: []}> {
         return {ps4Ip, pcIp: lanIp(ps4Ip), port: this.server.port};
       },
       onChange: changed,
-      onInstalled: () => void this.console.refresh(),
+      onDownloaded: entry => void this.watchInstall(entry),
     });
   }
 
@@ -105,6 +111,29 @@ export class AppCore extends EventEmitter<{change: []}> {
     }
   }
 
+  /**
+   * After the download the PS4 still installs the package, which takes from
+   * seconds to minutes. Re-read the console list until it shows the package
+   * (or give up after about five minutes), so both tabs catch up by themselves.
+   */
+  private async watchInstall(entry: LibraryEntry): Promise<void> {
+    const {titleId, kind, version} = entry.info;
+    if (!titleId) return;
+    const label = dlcLabel(entry.info.contentId);
+    const installed = () => {
+      const c = this.console.find(titleId);
+      if (!c) return false;
+      if (kind === 'patch') return !!version && (c.patchVersion || '') >= version;
+      if (kind === 'dlc') return !!label && c.dlcs.includes(label);
+      return true;
+    };
+    for (const seconds of WATCH_DELAYS) {
+      await new Promise(r => setTimeout(r, seconds * 1000));
+      await this.console.settled();
+      if ((await this.console.refresh()) && installed()) return;
+    }
+  }
+
   private title(entry: LibraryEntry): string {
     return entry.info.titles ? titleFor(entry.info.titles, this.language) : entry.name;
   }
@@ -113,8 +142,13 @@ export class AppCore extends EventEmitter<{change: []}> {
   private installState(entry: LibraryEntry): Pick<LibraryItem, 'installed' | 'installedVersion' | 'newer'> {
     const {info} = entry;
     const unknown = {installed: null, installedVersion: null, newer: false};
-    if (this.console.state(this.language).state !== 'ready' || !info.titleId || info.kind === 'dlc') return unknown;
+    if (this.console.state(this.language).state !== 'ready' || !info.titleId) return unknown;
     const c: RawConsoleItem | undefined = this.console.find(info.titleId);
+    if (info.kind === 'dlc') {
+      const label = dlcLabel(info.contentId);
+      if (!label) return unknown;
+      return {installed: !!c?.dlcs.includes(label), installedVersion: null, newer: false};
+    }
     if (info.kind === 'patch') {
       if (!c) return {installed: false, installedVersion: null, newer: false};
       const current = c.patchVersion || c.baseVersion || '';

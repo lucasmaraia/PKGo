@@ -70,6 +70,9 @@ export interface Job {
   finishedAt?: number;
 }
 
+/** Internal drive or extended (USB) storage. */
+export type ConsoleStorage = 'internal' | 'external';
+
 export interface ConsoleItem {
   titleId: string;
   title: string;
@@ -82,6 +85,9 @@ export interface ConsoleItem {
   appSize: number;
   patchSize: number;
   dlcCount: number;
+  /** Installed DLC labels: the last part of each DLC's content ID. */
+  dlcs: string[];
+  storage: ConsoleStorage;
   hasIcon: boolean;
 }
 

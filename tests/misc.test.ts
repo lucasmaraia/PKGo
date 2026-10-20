@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest';
+import {dlcLabel} from '@core/AppCore';
 import {normalize} from '@core/config/ConfigStore';
 import {parseDdpReply} from '@core/network/discovery';
 import {broadcastAddress, subnetHosts} from '@core/network/lan';
@@ -95,5 +96,13 @@ describe('i18n', () => {
     expect(matchLanguage('pt-PT')).toBe('pt-BR');
     expect(matchLanguage('es-MX')).toBe('es');
     expect(matchLanguage('de-DE')).toBe('en');
+  });
+});
+
+describe('dlcLabel', () => {
+  it('takes the folder name the PS4 uses for a DLC from its content ID', () => {
+    expect(dlcLabel('UP4064-CUSA20499_00-CUPHEADDLC000000')).toBe('CUPHEADDLC000000');
+    expect(dlcLabel('UP0000-CUSA00001_00-SHORT')).toBeNull();
+    expect(dlcLabel(null)).toBeNull();
   });
 });

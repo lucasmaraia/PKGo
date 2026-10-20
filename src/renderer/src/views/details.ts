@@ -67,7 +67,9 @@ function renderLibraryItem(id: string, body: HTMLElement): void {
     const status = item.error
       ? errorText(item.error)
       : item.installed
-        ? t('details.installed', {version: item.installedVersion || ''})
+        ? item.installedVersion
+          ? t('details.installed', {version: item.installedVersion})
+          : t('library.installedOnPs4')
         : item.newer
           ? t('library.newer', {version: item.installedVersion || ''})
           : item.installed === false
@@ -142,6 +144,7 @@ function renderConsoleItem(titleId: string, body: HTMLElement): void {
       [t(item.kind === 'game' ? 'details.gameVersion' : 'details.version'), item.baseVersion && `v${item.baseVersion}`],
       [t('details.update'), item.patchVersion && `v${item.patchVersion}`],
       [t('details.dlcs'), item.dlcCount || ''],
+      [t('details.storage'), t(`storage.${item.storage}`)],
       [t('details.used'), item.size && bytes(item.size)],
     ]);
 }

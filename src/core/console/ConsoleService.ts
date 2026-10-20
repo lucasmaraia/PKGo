@@ -1,12 +1,28 @@
-// Lists what is installed on the PS4 through the GoldHEN FTP server:
-// /user/app (games and apps), /user/patch (updates), /user/addcont (DLC)
-// and /user/appmeta (icons). Title and version come from the installed PKG headers.
-import type {ConsoleItem, ConsoleState, Language, PkgKind} from '@shared/types';
+// Lists what is installed on the PS4 through the GoldHEN FTP server, on the
+// internal drive and on extended (USB) storage: <root>/user/app (games and
+// apps), <root>/user/patch (updates) and <root>/user/addcont (DLC). Icons are
+// in /user/appmeta, or /user/appmeta/external for extended storage. Title and
+// version come from the installed PKG headers.
+import type {ConsoleItem, ConsoleState, ConsoleStorage, Language, PkgKind} from '@shared/types';
 import {AppError, toErrorInfo} from '../errors';
 import {readPkgMeta, titleFor, type Titles} from '../pkg/PkgReader';
 import {FtpClient, FtpError, type FtpEntry} from './FtpClient';
 
 const TITLE_ID = /^[A-Z]{4}\d{5}$/;
+
+interface Storage {
+  kind: ConsoleStorage;
+  /** Prefix of its user/app, user/patch and user/addcont folders. */
+  root: string;
+  appmeta: string;
+}
+
+/** Internal drive first: a title found on both counts as internal. */
+export const STORAGES: Storage[] = [
+  {kind: 'internal', root: '', appmeta: '/user/appmeta'},
+  {kind: 'external', root: '/mnt/ext0', appmeta: '/user/appmeta/external'},
+  {kind: 'external', root: '/mnt/ext1', appmeta: '/user/appmeta/external'},
+];
 
 /** What is known about an installed title; cached while its PKG sizes stay the same. */
 interface TitleMeta {
@@ -60,23 +76,43 @@ export async function readConsoleLibrary({host, port, cache, icons, onProgress}:
       ),
     );
   const dirs = (entries: FtpEntry[] | null) => (entries || []).filter(e => e.dir);
+  const titleIds = (names: string[] | null) => (names || []).filter(n => TITLE_ID.test(n));
 
   try {
-    const apps = (await (await session()).list('/user/app')).filter(n => TITLE_ID.test(n)).sort();
-    const patches = new Set((await optional(f => f.list('/user/patch'))) || []);
-    const addcont = new Set((await optional(f => f.list('/user/addcont'))) || []);
+    // Where each title's game, update and DLC are. The internal app folder must
+    // be readable (that proves the FTP server works); the others may not exist.
+    const apps = new Map<string, Storage>();
+    const patches = new Map<string, Storage>();
+    const addcont = new Map<string, Storage[]>();
+    for (const storage of STORAGES) {
+      const list =
+        storage.kind === 'internal'
+          ? await (await session()).list('/user/app')
+          : await optional(f => f.list(`${storage.root}/user/app`));
+      for (const id of titleIds(list)) if (!apps.has(id)) apps.set(id, storage);
+      for (const id of titleIds(await optional(f => f.list(`${storage.root}/user/patch`)))) {
+        if (!patches.has(id)) patches.set(id, storage);
+      }
+      for (const id of titleIds(await optional(f => f.list(`${storage.root}/user/addcont`)))) {
+        addcont.set(id, [...(addcont.get(id) || []), storage]);
+      }
+    }
+
+    const ids = [...apps.keys()].sort();
     const items: RawConsoleItem[] = [];
-    for (const [index, id] of apps.entries()) {
-      onProgress?.(index, apps.length);
-      const appSize = (await optional(f => f.sizes(`/user/app/${id}`)))?.get('app.pkg') ?? 0;
-      const patchSize = patches.has(id)
-        ? ((await optional(f => f.sizes(`/user/patch/${id}`)))?.get('patch.pkg') ?? 0)
-        : 0;
-      const key = `${id}:${appSize}:${patchSize}`;
+    for (const [index, id] of ids.entries()) {
+      onProgress?.(index, ids.length);
+      const storage = apps.get(id)!;
+      const patchStorage = patches.get(id);
+      const appDir = `${storage.root}/user/app/${id}`;
+      const patchDir = patchStorage ? `${patchStorage.root}/user/patch/${id}` : null;
+      const appSize = (await optional(f => f.sizes(appDir)))?.get('app.pkg') ?? 0;
+      const patchSize = patchDir ? ((await optional(f => f.sizes(patchDir)))?.get('patch.pkg') ?? 0) : 0;
+      const key = `${appDir}:${appSize}:${patchSize}`;
       let meta = cache.get(key);
       if (!meta) {
-        const base = appSize ? await pkgMeta(`/user/app/${id}/app.pkg`, id) : null;
-        const patch = patchSize ? await pkgMeta(`/user/patch/${id}/patch.pkg`, id) : null;
+        const base = appSize ? await pkgMeta(`${appDir}/app.pkg`, id) : null;
+        const patch = patchSize && patchDir ? await pkgMeta(`${patchDir}/patch.pkg`, id) : null;
         meta = {
           titles: base?.titles || patch?.titles || {default: id},
           kind: base?.kind || 'app',
@@ -86,11 +122,14 @@ export async function readConsoleLibrary({host, port, cache, icons, onProgress}:
         cache.set(key, meta);
       }
       if (!icons.has(id)) {
-        const icon = await optional(f => f.read(`/user/appmeta/${id}/icon0.png`, 0, Infinity));
+        const icon = await optional(f => f.read(`${storage.appmeta}/${id}/icon0.png`, 0, Infinity));
         if (icon?.length) icons.set(id, icon);
       }
       // DLC is read on every refresh: it can be installed without touching the game.
-      const dlcs = addcont.has(id) ? dirs(await optional(f => f.entries(`/user/addcont/${id}`))) : [];
+      const dlcs: string[] = [];
+      for (const s of addcont.get(id) || []) {
+        dlcs.push(...dirs(await optional(f => f.entries(`${s.root}/user/addcont/${id}`))).map(e => e.name));
+      }
       items.push({
         titleId: id,
         ...meta,
@@ -99,10 +138,12 @@ export async function readConsoleLibrary({host, port, cache, icons, onProgress}:
         appSize,
         patchSize,
         dlcCount: dlcs.length,
+        dlcs,
+        storage: storage.kind,
         hasIcon: icons.has(id),
       });
     }
-    onProgress?.(apps.length, apps.length);
+    onProgress?.(ids.length, ids.length);
     return items;
   } finally {
     ftp.close();
