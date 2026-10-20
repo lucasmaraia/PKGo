@@ -86,6 +86,9 @@
   "jobs.waitingPs4": "Waiting for the PS4 to start the download",
   "jobs.doneToast": "{title} was sent to the PS4, which finishes installing it in a moment.",
   "jobs.ps4NotReady": "The PS4 is not answering right now. The package was queued anyway.",
+  "jobs.cancel": "Cancel sending",
+  "jobs.cancelled": "Sending cancelled",
+  "jobs.cancelledToast": "Sending {title} was cancelled. The PS4 shows the download as failed: delete it from its notifications.",
 
   "details.installed": "Installed on the PS4 (v{version})",
   "details.notInstalled": "Not installed",
@@ -103,9 +106,10 @@
   "details.update": "Update",
   "details.dlcs": "DLC",
   "details.storage": "Storage",
+  "details.used": "Space used",
+
   "storage.internal": "Internal",
   "storage.external": "Extended storage",
-  "details.used": "Space used",
 
   "uninstall.title": "Delete from PS4",
   "uninstall.note": "Your saved data stays on the PS4. Deleting uses the system uninstaller through GoldHEN and cannot be undone: to play again, install the PKG again.",
@@ -164,7 +168,6 @@
   "errors.pkgNotFound": "This PKG is no longer in the library.",
   "errors.pkgUnreadable": "This file cannot be installed because it could not be read.",
   "errors.alreadyQueued": "This PKG is already in the queue.",
-  "errors.cancelOnlyQueued": "Only packages still waiting can be removed from the queue.",
   "errors.pkgRemoved": "The PKG was removed from the library.",
   "errors.ps4NotConfigured": "Set up the PS4 first.",
   "errors.noLan": "Could not find this PC's local network.",
@@ -176,5 +179,9 @@
   "errors.noPatchInstalled": "This game has no update installed.",
   "errors.uninstallRefused": "The PS4 refused to delete it (code {code}).",
   "errors.uninstallRefusedInit": "The PS4 refused to delete it (code {code}; init {init}).",
-  "errors.uninstallNotApplied": "The PS4 accepted the request, but the item is still installed. Try deleting it from the PS4 menu."
+  "errors.uninstallNotApplied": "The PS4 accepted the request, but the item is still installed. Try deleting it from the PS4 menu.",
+  "errors.jobNotActive": "This sending has already finished.",
+  "errors.ps4DownloadFailed": "The PS4 could not download the package (code {code}). Check the notification on the PS4.",
+  "errors.ps4Cancelled": "The download was cancelled on the PS4.",
+  "errors.installFailed": "The PS4 downloaded the package but could not install it (code {code})."
 }

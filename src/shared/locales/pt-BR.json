@@ -86,6 +86,9 @@
   "jobs.waitingPs4": "Aguardando o PS4 começar o download",
   "jobs.doneToast": "{title} foi enviado ao PS4, que conclui a instalação em instantes.",
   "jobs.ps4NotReady": "O PS4 não está respondendo agora. O pacote entrou na fila mesmo assim.",
+  "jobs.cancel": "Cancelar envio",
+  "jobs.cancelled": "Envio cancelado",
+  "jobs.cancelledToast": "O envio de {title} foi cancelado. O PS4 mostra o download como falho: apague-o nas notificações dele.",
 
   "details.installed": "Instalado no PS4 (v{version})",
   "details.notInstalled": "Não instalado",
@@ -103,9 +106,10 @@
   "details.update": "Atualização",
   "details.dlcs": "DLCs",
   "details.storage": "Armazenamento",
+  "details.used": "Espaço ocupado",
+
   "storage.internal": "Interno",
   "storage.external": "Armazenamento estendido",
-  "details.used": "Espaço ocupado",
 
   "uninstall.title": "Excluir do PS4",
   "uninstall.note": "Seus dados salvos continuam no PS4. A exclusão usa o desinstalador do sistema, pelo GoldHEN, e não pode ser desfeita: para jogar de novo, será preciso reinstalar o PKG.",
@@ -164,7 +168,6 @@
   "errors.pkgNotFound": "Este PKG não está mais na biblioteca.",
   "errors.pkgUnreadable": "Este arquivo não pode ser instalado porque não foi possível lê-lo.",
   "errors.alreadyQueued": "Este PKG já está na fila.",
-  "errors.cancelOnlyQueued": "Só é possível remover da fila os pacotes que ainda estão aguardando.",
   "errors.pkgRemoved": "O PKG foi removido da biblioteca.",
   "errors.ps4NotConfigured": "Configure o PS4 primeiro.",
   "errors.noLan": "Não encontrei a rede local deste PC.",
@@ -176,5 +179,9 @@
   "errors.noPatchInstalled": "Este jogo não tem atualização instalada.",
   "errors.uninstallRefused": "O PS4 recusou a exclusão (código {code}).",
   "errors.uninstallRefusedInit": "O PS4 recusou a exclusão (código {code}; inicialização {init}).",
-  "errors.uninstallNotApplied": "O PS4 aceitou o pedido, mas o item continua instalado. Tente excluir pelo menu do PS4."
+  "errors.uninstallNotApplied": "O PS4 aceitou o pedido, mas o item continua instalado. Tente excluir pelo menu do PS4.",
+  "errors.jobNotActive": "Este envio já terminou.",
+  "errors.ps4DownloadFailed": "O PS4 não conseguiu baixar o pacote (código {code}). Veja a notificação no PS4.",
+  "errors.ps4Cancelled": "O download foi cancelado no PS4.",
+  "errors.installFailed": "O PS4 baixou o pacote, mas não conseguiu instalá-lo (código {code})."
 }

@@ -15,6 +15,7 @@ import type {
 import {ConfigStore} from './config/ConfigStore';
 import {ConsoleService, type RawConsoleItem} from './console/ConsoleService';
 import {probeFtp} from './console/FtpClient';
+import {KlogMonitor, type KlogEvent} from './console/KlogMonitor';
 import {AppError, hex} from './errors';
 import {InstallQueue} from './install/InstallQueue';
 import {LibraryService, pkgId, type LibraryEntry} from './library/LibraryService';
@@ -45,6 +46,8 @@ export class AppCore extends EventEmitter<{change: []}> {
   readonly console: ConsoleService;
   readonly server: PkgFileServer;
   readonly queue: InstallQueue;
+  private readonly klog: KlogMonitor;
+  private consoleRefreshTimer: NodeJS.Timeout | null = null;
   private readonly installPayload: InstallPayload;
   private readonly uninstallPayload: string;
   private ps4: Ps4Status = 'checking';
@@ -66,7 +69,7 @@ export class AppCore extends EventEmitter<{change: []}> {
       library: id => this.library.get(id),
       title: entry => this.title(entry),
       payload: this.installPayload,
-      served: this.server.served,
+      files: this.server,
       network: () => {
         const {ps4Ip} = this.config.get();
         return {ps4Ip, pcIp: lanIp(ps4Ip), port: this.server.port};
@@ -74,6 +77,32 @@ export class AppCore extends EventEmitter<{change: []}> {
       onChange: changed,
       onDownloaded: entry => void this.watchInstall(entry),
     });
+    this.klog = new KlogMonitor(() => this.config.get().ps4Ip);
+    this.klog.on('event', event => this.onKlog(event));
+  }
+
+  /** Reacts to what the PS4 log reports about downloads, installs and deletions. */
+  private onKlog(event: KlogEvent): void {
+    switch (event.type) {
+      case 'ourTask':
+        return this.queue.attachTask(event.task);
+      case 'taskEnded':
+        return this.queue.taskEnded(event.task, event.error);
+      case 'taskDeleted':
+        return this.queue.taskDeleted(event.task);
+      case 'installEnded':
+        this.queue.installEnded(event.task, event.result);
+        return this.refreshConsoleSoon();
+      case 'gameDeleted':
+        // Deleted on the PS4 (by its menu or by us): show it without waiting.
+        return this.refreshConsoleSoon();
+    }
+  }
+
+  /** Re-reads the console list shortly; several events in a row cause one read. */
+  private refreshConsoleSoon(delay = 3000): void {
+    if (this.consoleRefreshTimer) clearTimeout(this.consoleRefreshTimer);
+    this.consoleRefreshTimer = setTimeout(() => void this.console.refresh(), delay);
   }
 
   get language(): Language {
@@ -91,10 +120,13 @@ export class AppCore extends EventEmitter<{change: []}> {
     this.statusTimer = setInterval(() => void this.checkPs4(), STATUS_INTERVAL);
     void this.library.rescan();
     void this.console.refresh();
+    this.klog.start();
   }
 
   async stop(): Promise<void> {
     if (this.statusTimer) clearInterval(this.statusTimer);
+    if (this.consoleRefreshTimer) clearTimeout(this.consoleRefreshTimer);
+    this.klog.stop();
     await this.installPayload.close();
     await this.server.close();
   }
@@ -213,6 +245,7 @@ export class AppCore extends EventEmitter<{change: []}> {
     if (after.ps4Ip !== before.ps4Ip || after.ftpPort !== before.ftpPort) {
       this.ps4 = 'checking';
       this.console.reset();
+      this.klog.restart();
       void this.checkPs4();
       void this.console.refresh();
     }

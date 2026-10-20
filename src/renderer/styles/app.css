@@ -541,6 +541,10 @@ main {
   flex: none;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
 }
+.hero-cancel {
+  align-self: flex-start;
+  flex: none;
+}
 .hero-info {
   flex: 1;
   min-width: 0;

@@ -19,7 +19,7 @@ import {
   useConsole,
 } from './views/settings';
 import {toast} from './views/toast';
-import {initUninstall, openUninstall, updateUninstall} from './views/uninstall';
+import {initUninstall, isUninstalling, openUninstall, updateUninstall} from './views/uninstall';
 
 const api = window.api;
 
@@ -91,8 +91,13 @@ async function onAction(el: HTMLElement): Promise<void> {
       closeDetails();
       if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
       return void run(() => api.install(el.dataset.id!));
-    case 'cancelJob':
-      return void run(() => api.cancelJob(Number(el.dataset.job)));
+    case 'cancelJob': {
+      const job = state?.jobs.find(j => j.id === Number(el.dataset.job));
+      const sending = job && job.state !== 'queued';
+      const ok = await run(() => api.cancelJob(Number(el.dataset.job)).then(() => true));
+      if (ok && sending) toast(t('jobs.cancelledToast', {title: job.title}));
+      return;
+    }
     case 'clearFinished':
       return void run(() => api.clearFinished());
     case 'removeFromLibrary':
@@ -147,6 +152,25 @@ function bindEvents(): void {
   document.addEventListener('change', e => {
     const el = e.target as HTMLElement;
     if (el.dataset.action === 'toggleRecursive') void onAction(el);
+  });
+
+  // Side panels and dialogs close on a click outside them (on the backdrop).
+  for (const dialog of $$<HTMLDialogElement>('dialog')) {
+    dialog.addEventListener('click', e => {
+      if (e.target !== dialog) return;
+      const r = dialog.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      // The uninstall confirmation stays while it is deleting.
+      if (!inside && !(dialog.id === 'uninstall' && isUninstalling())) dialog.close();
+    });
+  }
+
+  // Back to the window: refresh the console list if it is a while old
+  // (games may have been installed or deleted on the PS4 meanwhile).
+  window.addEventListener('focus', () => {
+    const c = store.state?.console;
+    if (c && c.state === 'ready' && !c.refreshing && Date.now() - c.updatedAt > 30_000)
+      void run(() => api.refreshConsole());
   });
 
   $<HTMLInputElement>('#search').addEventListener('input', e => {

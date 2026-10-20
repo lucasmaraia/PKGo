@@ -50,7 +50,7 @@ export interface LibraryItem {
   newer: boolean;
 }
 
-export type JobState = 'queued' | 'starting' | 'installing' | 'done' | 'error';
+export type JobState = 'queued' | 'starting' | 'installing' | 'done' | 'error' | 'cancelled';
 export const ACTIVE_JOB_STATES: readonly JobState[] = ['queued', 'starting', 'installing'];
 
 export interface Job {
@@ -66,6 +66,8 @@ export interface Job {
   eta: number | null;
   error: ErrorInfo | null;
   createdAt: number;
+  /** The PS4 download task, once its log reports it. */
+  taskId?: string;
   startedAt?: number;
   finishedAt?: number;
 }

@@ -43,6 +43,7 @@ export function renderActivity(): void {
             <div class="progress" id="heroBar"><span></span></div>
             <div class="hero-stats" id="heroStats"></div>
           </div>
+          <button class="btn small hero-cancel" data-action="cancelJob" data-job="${current.id}">${esc(t('jobs.cancel'))}</button>
         </div>
       </div>`
         : '') +
@@ -58,13 +59,15 @@ export function renderActivity(): void {
               ? t('jobs.waiting')
               : j.state === 'done'
                 ? t('jobs.done')
-                : j.error
-                  ? errorText(j.error)
-                  : '';
+                : j.state === 'cancelled'
+                  ? t('jobs.cancelled')
+                  : j.error
+                    ? errorText(j.error)
+                    : '';
           return `<div class="queue-row ${j.state}">${cover(it || {title: j.title, hasIcon: false, iconId: null, id: ''})}
           <div class="q-title">${esc(j.title)}<span class="q-sub">${esc(sub)}</span></div>
           ${j.state === 'queued' ? `<button class="btn small" data-action="cancelJob" data-job="${j.id}">${esc(t('jobs.remove'))}</button>` : ''}
-          ${j.state === 'error' ? `<button class="btn small" data-action="install" data-id="${j.pkgId}">${esc(t('common.retry'))}</button>` : ''}
+          ${j.state === 'error' || j.state === 'cancelled' ? `<button class="btn small" data-action="install" data-id="${j.pkgId}">${esc(t('common.retry'))}</button>` : ''}
         </div>`;
         })
         .join('')}</div>`;

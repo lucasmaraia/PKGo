@@ -10,6 +10,8 @@ import {toast} from './toast';
 let targetId: string | null = null;
 let busy = false;
 
+export const isUninstalling = (): boolean => busy;
+
 const dialog = () => $<HTMLDialogElement>('#uninstall');
 
 export function openUninstall(titleId: string): void {

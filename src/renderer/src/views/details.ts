@@ -81,10 +81,9 @@ function renderLibraryItem(id: string, body: HTMLElement): void {
     const installButton = active
       ? ''
       : `<button type="button" class="menu-item" data-action="install" data-id="${item.id}" ${item.error ? 'disabled' : ''}>${ICON.install}${esc(t(item.installed ? 'details.reinstall' : 'details.install'))}</button>`;
-    const cancelButton =
-      active && job.state === 'queued'
-        ? `<button type="button" class="menu-item" data-action="cancelJob" data-job="${job.id}">${ICON.close}${esc(t('details.removeFromQueue'))}</button>`
-        : '';
+    const cancelButton = active
+      ? `<button type="button" class="menu-item" data-action="cancelJob" data-job="${job.id}">${ICON.close}${esc(t(job.state === 'queued' ? 'details.removeFromQueue' : 'jobs.cancel'))}</button>`
+      : '';
     body.innerHTML =
       head(bg, cover(item), item.title, `${kindLabel(item.kind)}${item.version ? ` · v${item.version}` : ''}`) +
       progress +

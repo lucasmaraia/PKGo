@@ -1,15 +1,23 @@
 // Installs PKGs one at a time through the GoldHEN install payload.
 import {ACTIVE_JOB_STATES, type Job} from '@shared/types';
-import {AppError, toErrorInfo} from '../errors';
+import {AppError, hex, toErrorInfo} from '../errors';
 import type {LibraryEntry} from '../library/LibraryService';
-import type {InstallPayload} from '../payload/PayloadClient';
+import type {PackageRequest} from '../payload/PayloadClient';
 import type {ServedRanges} from '../server/ServedRanges';
+
+/** What the queue needs from the PKG file server. */
+export interface FileAccess {
+  served: ServedRanges;
+  /** Stops serving a file (cuts downloads in progress). */
+  block(id: string): void;
+  unblock(id: string): void;
+}
 
 export interface InstallContext {
   library: (id: string) => LibraryEntry | undefined;
   title: (entry: LibraryEntry) => string;
-  payload: InstallPayload;
-  served: ServedRanges;
+  payload: {available: boolean; install(ps4Ip: string, pcIp: string, pkg: PackageRequest): Promise<void>};
+  files: FileAccess;
   /** Console IP, this PC's LAN IP and the PKG server port, read when a job starts. */
   network: () => {ps4Ip: string; pcIp: string | null; port: number};
   onChange: () => void;
@@ -22,6 +30,7 @@ const START_TIMEOUT = 60_000;
 const STALL_TIMEOUT = 180_000;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+const isRunning = (job: Job) => job.state === 'starting' || job.state === 'installing';
 
 /** BGFT package type: "PS4" + param.sfo category (GD game, GP update, AC DLC…). */
 export function bgftType(entry: LibraryEntry): string {
@@ -63,10 +72,19 @@ export class InstallQueue {
     return job;
   }
 
+  /**
+   * Removes a waiting job, or stops one being sent: the file stops being
+   * served, so the PS4 sees its download fail (it keeps a failed entry in its
+   * notifications, which the payload cannot remove).
+   */
   cancel(jobId: number): void {
     const job = this.jobs.find(j => j.id === jobId);
-    if (!job || job.state !== 'queued') throw new AppError('cancelOnlyQueued');
-    this.jobs.splice(this.jobs.indexOf(job), 1);
+    if (!job || !ACTIVE_JOB_STATES.includes(job.state)) throw new AppError('jobNotActive');
+    if (job.state === 'queued') this.jobs.splice(this.jobs.indexOf(job), 1);
+    else {
+      Object.assign(job, {state: 'cancelled', speed: 0, eta: null, finishedAt: Date.now()});
+      this.ctx.files.block(job.pkgId);
+    }
     this.ctx.onChange();
   }
 
@@ -75,6 +93,32 @@ export class InstallQueue {
       if (!ACTIVE_JOB_STATES.includes(this.jobs[i]!.state)) this.jobs.splice(i, 1);
     }
     this.ctx.onChange();
+  }
+
+  // ---------- what the PS4 reports (see KlogMonitor) ----------
+
+  /** A download task created by our payload: it belongs to the job being sent. */
+  attachTask(task: string): void {
+    const job = this.jobs.find(j => isRunning(j) && !j.taskId);
+    if (job) job.taskId = task;
+  }
+
+  /** The PS4 ended a download task; a non-zero error means it failed there. */
+  taskEnded(task: string, error: number): void {
+    const job = this.jobs.find(j => j.taskId === task && isRunning(j));
+    if (job && error) this.fail(job, new AppError('ps4DownloadFailed', {code: hex(error)}));
+  }
+
+  /** The task was removed on the PS4 (e.g. deleted from its notifications) before finishing. */
+  taskDeleted(task: string): void {
+    const job = this.jobs.find(j => j.taskId === task && isRunning(j));
+    if (job) this.fail(job, new AppError('ps4Cancelled'));
+  }
+
+  /** The PS4 finished installing a downloaded package. */
+  installEnded(task: string, result: number): void {
+    const job = this.jobs.find(j => j.taskId === task);
+    if (job && result) this.fail(job, new AppError('installFailed', {code: hex(result)}));
   }
 
   private async pump(): Promise<void> {
@@ -86,7 +130,7 @@ export class InstallQueue {
         try {
           await this.run(job);
         } catch (e) {
-          this.fail(job, e);
+          if (isRunning(job)) this.fail(job, e);
         }
         this.ctx.onChange();
       }
@@ -96,7 +140,9 @@ export class InstallQueue {
   }
 
   private fail(job: Job, error: unknown): void {
-    Object.assign(job, {state: 'error', error: toErrorInfo(error), finishedAt: Date.now()});
+    Object.assign(job, {state: 'error', error: toErrorInfo(error), speed: 0, eta: null, finishedAt: Date.now()});
+    this.ctx.files.block(job.pkgId);
+    this.ctx.onChange();
   }
 
   private async run(job: Job): Promise<void> {
@@ -109,7 +155,9 @@ export class InstallQueue {
     Object.assign(job, {state: 'starting', startedAt: Date.now()});
     this.ctx.onChange();
 
-    this.ctx.served.reset(entry.id);
+    const {served} = this.ctx.files;
+    served.reset(entry.id);
+    this.ctx.files.unblock(entry.id);
     await this.ctx.payload.install(ps4Ip, pcIp, {
       url: `http://${pcIp}:${port}/pkg/${entry.id}.pkg`,
       name: job.title,
@@ -118,6 +166,8 @@ export class InstallQueue {
       size: entry.size,
       icon: entry.info.icon,
     });
+    // Cancelled (or failed on the PS4) while the payload was being sent.
+    if (job.state !== 'starting') return;
     job.state = 'installing';
     this.ctx.onChange();
 
@@ -125,7 +175,8 @@ export class InstallQueue {
     let lastChange = Date.now();
     for (;;) {
       await sleep(1000);
-      const done = Math.min(this.ctx.served.bytes(entry.id), entry.size);
+      if (job.state !== 'installing') return;
+      const done = Math.min(served.bytes(entry.id), entry.size);
       const now = Date.now();
       if (done > last.bytes) lastChange = now;
       else if (now - lastChange > (done ? STALL_TIMEOUT : START_TIMEOUT)) {

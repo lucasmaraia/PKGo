@@ -16,6 +16,9 @@ export class PkgFileServer {
   private server: http.Server;
   /** Bytes of each PKG already handed to the console. */
   readonly served = new ServedRanges();
+  /** Files whose sending was cancelled: requests for them get 404. */
+  private blocked = new Set<string>();
+  private open = new Map<string, Set<http.ServerResponse>>();
 
   constructor(private readonly lookup: (id: string) => ServableFile | undefined) {
     this.server = http.createServer((req, res) => this.handle(req, res));
@@ -50,6 +53,16 @@ export class PkgFileServer {
     return (this.server.address() as net.AddressInfo | null)?.port ?? 0;
   }
 
+  /** Stops serving a file and cuts its downloads in progress. */
+  block(id: string): void {
+    this.blocked.add(id);
+    for (const res of this.open.get(id) || []) res.destroy();
+  }
+
+  unblock(id: string): void {
+    this.blocked.delete(id);
+  }
+
   /** Stops serving, cutting downloads in progress (closing waits for none). */
   close(): Promise<void> {
     return new Promise(resolve => {
@@ -62,7 +75,9 @@ export class PkgFileServer {
     // Match the path only: the PS4 download service adds query parameters.
     const {pathname} = new URL(req.url || '/', 'http://localhost');
     const match = /^\/pkg\/([0-9a-f]{12})\.pkg$/.exec(pathname);
-    const file = match && (req.method === 'GET' || req.method === 'HEAD') ? this.lookup(match[1]!) : undefined;
+    const id = match?.[1];
+    const allowed = id && !this.blocked.has(id) && (req.method === 'GET' || req.method === 'HEAD');
+    const file = allowed ? this.lookup(id) : undefined;
     if (!file) {
       res.writeHead(404);
       res.end();
@@ -94,6 +109,9 @@ export class PkgFileServer {
       res.end();
       return;
     }
+    const open = this.open.get(file.id) ?? new Set();
+    this.open.set(file.id, open.add(res));
+    res.on('close', () => open.delete(res));
     const stream = fs.createReadStream(file.path, {start, end});
     let pos = start;
     stream.on('data', chunk => {
