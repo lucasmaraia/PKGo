@@ -17,6 +17,8 @@ const STALE_AFTER = 30 * 60 * 1000;
 
 /** The portable build runs from a temporary copy (set by electron-builder). */
 const portable = !!process.env.PORTABLE_EXECUTABLE_FILE;
+/** Release tests: look for updates, but never download or install them. */
+const dryRun = !!process.env.PKGO_UPDATE_DRY_RUN;
 
 /**
  * Installed for all users (Program Files): replacing it needs administrator
@@ -48,10 +50,10 @@ export class Updater {
     // Only an installed build knows where it came from (app-update.yml).
     if (!app.isPackaged) return this.set({state: 'off'});
     this.admin = needsAdmin();
-    autoUpdater.autoDownload = !portable;
+    autoUpdater.autoDownload = !portable && !dryRun;
     // Installing on quit would show the administrator prompt out of nowhere
     // when the app is closed: then it installs only from the restart button.
-    autoUpdater.autoInstallOnAppQuit = !portable && !this.admin;
+    autoUpdater.autoInstallOnAppQuit = !portable && !this.admin && !dryRun;
     autoUpdater.logger = {
       info: (m: unknown) => this.core.log.add(`update: ${String(m)}`),
       warn: (m: unknown) => this.core.log.add(`update warning: ${String(m)}`),
@@ -62,8 +64,8 @@ export class Updater {
     autoUpdater.on('update-not-available', () => this.set({state: 'idle', checkedAt: Date.now()}));
     autoUpdater.on('update-available', info =>
       this.set(
-        portable
-          ? {state: 'available', version: info.version, manual: true}
+        portable || dryRun
+          ? {state: 'available', version: info.version, manual: portable}
           : {state: 'downloading', version: info.version, percent: 0},
       ),
     );

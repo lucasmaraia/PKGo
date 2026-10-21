@@ -1,7 +1,7 @@
 {
   "name": "pkgo",
   "productName": "PKGo",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "PKGo for PS4: install and manage PS4 packages over the network with GoldHEN, no installer app needed.",
   "license": "GPL-3.0-only",
   "author": "lucasmaraia",
@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "electron-vite build && playwright test",
+    "test:release": "playwright test -c playwright.release.config.ts",
     "payloads": "bash payloads/build.sh",
     "icons": "electron scripts/build-icons.mjs",
     "dist": "npm run build && electron-builder",
