@@ -258,7 +258,7 @@ function bindEvents(): void {
       if (!document.querySelector('dialog[open]')) $<HTMLInputElement>('#search').focus();
     },
     settings: () => openSettings(),
-    onGamepad: connected => toast(t(connected ? 'nav.gamepadConnected' : 'nav.gamepadDisconnected')),
+    onFirstGamepad: () => toast(t('nav.gamepadConnected')),
   });
 }
 

@@ -12,7 +12,8 @@ export interface NavigationActions {
   search(): void;
   /** Options. */
   settings(): void;
-  onGamepad(connected: boolean): void;
+  /** The first controller of the session connected (to explain the buttons once). */
+  onFirstGamepad(): void;
 }
 
 const FOCUSABLE = [
@@ -132,9 +133,14 @@ export function initNavigation(actions: NavigationActions): void {
     }
   };
 
+  // Controllers often drop and come back on their own (Bluetooth, Steam or
+  // DS4Windows remapping), so only the first connection is announced.
+  let announced = false;
   window.addEventListener('gamepadconnected', () => {
-    actions.onGamepad(true);
+    if (!announced) {
+      announced = true;
+      actions.onFirstGamepad();
+    }
     if (!frame) frame = requestAnimationFrame(poll);
   });
-  window.addEventListener('gamepaddisconnected', () => actions.onGamepad(false));
 }

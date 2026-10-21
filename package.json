@@ -1,7 +1,7 @@
 {
   "name": "pkg-sender",
   "productName": "PKG Sender",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Install and manage PS4 packages over the network with GoldHEN, no installer app needed.",
   "license": "GPL-3.0-only",
   "author": "lucasmaraia",

@@ -29,7 +29,6 @@
   "nav.show": "Mostrar",
   "nav.settings": "Configurações",
   "nav.gamepadConnected": "Controle conectado: use o direcional para navegar, ✕ para escolher, ○ para voltar e L1/R1 para trocar de aba.",
-  "nav.gamepadDisconnected": "Controle desconectado.",
 
   "filter.all": "Todos",
   "filter.game": "Jogos",

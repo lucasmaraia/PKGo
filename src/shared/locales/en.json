@@ -29,7 +29,6 @@
   "nav.show": "Show",
   "nav.settings": "Settings",
   "nav.gamepadConnected": "Controller connected: use the D-pad to move, ✕ to choose, ○ to go back and L1/R1 to switch tabs.",
-  "nav.gamepadDisconnected": "Controller disconnected.",
 
   "filter.all": "All",
   "filter.game": "Games",

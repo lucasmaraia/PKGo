@@ -29,7 +29,6 @@
   "nav.show": "Mostrar",
   "nav.settings": "Ajustes",
   "nav.gamepadConnected": "Mando conectado: usa la cruceta para moverte, ✕ para elegir, ○ para volver y L1/R1 para cambiar de pestaña.",
-  "nav.gamepadDisconnected": "Mando desconectado.",
 
   "filter.all": "Todos",
   "filter.game": "Juegos",
