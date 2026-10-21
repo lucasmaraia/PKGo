@@ -12,6 +12,7 @@ Nenhum app instalador precisa estar aberto no console.
 - **Biblioteca no PC**: adicione quantas pastas quiser (com subpastas), ou arraste pastas e PKGs para a janela, e veja cada PKG com capa, título, versão e tipo (jogo, atualização, DLC ou app/homebrew).
 - **Instalação em um clique**: o PKGo serve o arquivo pela rede e o PS4 baixa em segundo plano, com progresso, velocidade e tempo restante. Os pacotes entram numa fila e instalam um depois do outro.
 - **Marque vários pacotes** e instale de uma vez (jogos primeiro, depois atualizações e DLCs), ou marque todos os que o filtro mostra.
+- **Excluir do PC**: os pacotes marcados vão para a Lixeira; a pasta que é só daquele jogo vai junto (nunca uma pasta da biblioteca ou uma pasta sua, como Downloads).
 - **Instalar todas as atualizações**: um botão coloca na fila cada atualização mais nova que a do PS4 e as DLCs que ele ainda não tem.
 - **Acompanha o PS4 em tempo real**: falhas, downloads cancelados ou jogos excluídos no console aparecem na hora. Downloads que falham são tentados de novo, e os cancelados ou com falha saem da lista de downloads do PS4, sem deixar notificação de erro.
 - **Aba do console**: lista os jogos e apps instalados no PS4, com versão, atualização, quantidade de DLCs e espaço ocupado.

@@ -178,3 +178,28 @@ test('checks tiles and queues them, games before updates', async () => {
   expect(order).toHaveLength(3);
   expect(order[2]).toBe('patch');
 });
+
+test('deletes checked packages to the trash, with their own folders', async () => {
+  const trash = path.join(dataDir, 'trash');
+  fs.mkdirSync(trash);
+  await app.close();
+  app = await electron.launch({
+    args: [ROOT, ...(process.platform === 'linux' ? ['--no-sandbox'] : [])],
+    env: {...process.env, PKGO_USER_DATA: dataDir, PKGO_TRASH_DIR: trash},
+  });
+  page = await app.firstWindow();
+  const cards = page.locator('#grid .card');
+  await expect(cards).toHaveCount(3);
+  await page.locator('.chip[data-kind="patch"]').click();
+  await page.locator('#selectAll').check();
+  await page.locator('.chip[data-kind="all"]').click();
+  await cards.filter({hasText: 'Beta Homebrew'}).click();
+  await page.locator('[data-action="deleteSelected"]').click();
+  // The update has a folder of its own; the homebrew sits right in the library folder.
+  await expect(page.locator('#deleteSummary')).toContainText('1 file(s) and 1 folder(s)');
+  await page.locator('#confirmDelete').click();
+  await expect(page.locator('#deleteFiles')).toBeHidden();
+  await expect(cards).toHaveCount(1);
+  expect(fs.readdirSync(trash).sort()).toEqual(['Homebrew.pkg', 'updates']);
+  expect(fs.existsSync(path.join(library, 'Alpha.pkg'))).toBe(true);
+});

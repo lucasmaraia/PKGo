@@ -70,6 +70,7 @@
   "library.installSelected": "Instalar marcados ({count})",
   "library.clearSelection": "Desmarcar",
   "library.selectedQueued": "{count} paquete(s) en cola.",
+  "library.deleteSelected": "Eliminar del PC ({count})",
 
   "console.refresh": "Actualizar lista",
   "console.updating": "actualizando…",
@@ -121,6 +122,7 @@
   "details.dlcs": "DLC",
   "details.storage": "Almacenamiento",
   "details.used": "Espacio ocupado",
+  "details.deleteFromPc": "Eliminar del PC…",
 
   "storage.internal": "Interno",
   "storage.external": "Almacenamiento ampliado",
@@ -212,6 +214,7 @@
   "errors.updateUnavailable": "Esta versión no se actualiza sola.",
   "errors.updateNotReady": "La actualización aún no se ha descargado.",
   "errors.updateWaitForJobs": "Hay un envío en curso: actualiza cuando termine.",
+  "errors.trashUnavailable": "La Papelera no está disponible en este sistema.",
 
   "drop.title": "Suelta para añadir a la biblioteca",
   "drop.hint": "Las carpetas entran en la lista de carpetas; los archivos .pkg se añaden uno a uno.",
@@ -223,5 +226,20 @@
   "update.checking": "Buscando actualizaciones…",
   "update.readyInfo": "La versión {version} se descargó y se instalará al reiniciar PKGo.",
   "update.availableInfo": "La versión {version} está disponible para descargar.",
-  "update.upToDate": "Tienes la versión más reciente."
+  "update.upToDate": "Tienes la versión más reciente.",
+
+  "deleteFiles.title": "Eliminar del PC",
+  "deleteFiles.summary": "{what} van a la Papelera, liberando {size}.",
+  "deleteFiles.and": " y ",
+  "deleteFiles.folders": "{count} carpeta(s)",
+  "deleteFiles.files": "{count} archivo(s)",
+  "deleteFiles.note": "Una carpeta solo se elimina entera cuando es solo de ese juego. Todo se puede recuperar desde la Papelera.",
+  "deleteFiles.busy": "{count} paquete(s) que se están enviando a la PS4 quedan fuera.",
+  "deleteFiles.more": "y {count} más",
+  "deleteFiles.confirm": "Mover a la Papelera",
+  "deleteFiles.deleting": "Moviendo…",
+  "deleteFiles.done": "{count} paquete(s) movido(s) a la Papelera.",
+  "deleteFiles.failed": "No se pudo mover a la Papelera: {path}",
+  "deleteFiles.nothing": "Los archivos marcados ya no están en el PC.",
+  "deleteFiles.onlyBusy": "Los paquetes marcados se están enviando a la PS4: cancela el envío para eliminarlos."
 }

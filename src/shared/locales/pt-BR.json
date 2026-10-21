@@ -70,6 +70,7 @@
   "library.installSelected": "Instalar marcados ({count})",
   "library.clearSelection": "Desmarcar",
   "library.selectedQueued": "{count} pacote(s) na fila.",
+  "library.deleteSelected": "Excluir do PC ({count})",
 
   "console.refresh": "Atualizar lista",
   "console.updating": "atualizando…",
@@ -121,6 +122,7 @@
   "details.dlcs": "DLCs",
   "details.storage": "Armazenamento",
   "details.used": "Espaço ocupado",
+  "details.deleteFromPc": "Excluir do PC…",
 
   "storage.internal": "Interno",
   "storage.external": "Armazenamento estendido",
@@ -212,6 +214,7 @@
   "errors.updateUnavailable": "Esta versão não se atualiza sozinha.",
   "errors.updateNotReady": "A atualização ainda não foi baixada.",
   "errors.updateWaitForJobs": "Há um envio em andamento: atualize quando ele terminar.",
+  "errors.trashUnavailable": "A Lixeira não está disponível neste sistema.",
 
   "drop.title": "Solte para adicionar à biblioteca",
   "drop.hint": "Pastas entram na lista de pastas; arquivos .pkg são adicionados um a um.",
@@ -223,5 +226,20 @@
   "update.checking": "Procurando atualizações…",
   "update.readyInfo": "A versão {version} foi baixada e será instalada ao reiniciar o PKGo.",
   "update.availableInfo": "A versão {version} está disponível para baixar.",
-  "update.upToDate": "Você está com a versão mais recente."
+  "update.upToDate": "Você está com a versão mais recente.",
+
+  "deleteFiles.title": "Excluir do PC",
+  "deleteFiles.summary": "{what} vão para a Lixeira, liberando {size}.",
+  "deleteFiles.and": " e ",
+  "deleteFiles.folders": "{count} pasta(s)",
+  "deleteFiles.files": "{count} arquivo(s)",
+  "deleteFiles.note": "Uma pasta só é excluída inteira quando é só daquele jogo. Dá para recuperar tudo pela Lixeira.",
+  "deleteFiles.busy": "{count} pacote(s) sendo enviado(s) ao PS4 ficam de fora.",
+  "deleteFiles.more": "e mais {count}",
+  "deleteFiles.confirm": "Mover para a Lixeira",
+  "deleteFiles.deleting": "Movendo…",
+  "deleteFiles.done": "{count} pacote(s) movido(s) para a Lixeira.",
+  "deleteFiles.failed": "Não foi possível mover para a Lixeira: {path}",
+  "deleteFiles.nothing": "Os arquivos marcados não existem mais no PC.",
+  "deleteFiles.onlyBusy": "Os pacotes marcados estão sendo enviados ao PS4: cancele o envio para excluí-los."
 }

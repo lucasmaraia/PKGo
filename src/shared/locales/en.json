@@ -70,6 +70,7 @@
   "library.installSelected": "Install checked ({count})",
   "library.clearSelection": "Uncheck",
   "library.selectedQueued": "{count} package(s) queued.",
+  "library.deleteSelected": "Delete from PC ({count})",
 
   "console.refresh": "Refresh list",
   "console.updating": "refreshing…",
@@ -121,6 +122,7 @@
   "details.dlcs": "DLC",
   "details.storage": "Storage",
   "details.used": "Space used",
+  "details.deleteFromPc": "Delete from PC…",
 
   "storage.internal": "Internal",
   "storage.external": "Extended storage",
@@ -212,6 +214,7 @@
   "errors.updateUnavailable": "This version does not update itself.",
   "errors.updateNotReady": "The update has not been downloaded yet.",
   "errors.updateWaitForJobs": "A package is being sent: update when it finishes.",
+  "errors.trashUnavailable": "The trash is not available on this system.",
 
   "drop.title": "Drop to add to the library",
   "drop.hint": "Folders join the folder list; .pkg files are added one by one.",
@@ -223,5 +226,20 @@
   "update.checking": "Looking for updates…",
   "update.readyInfo": "Version {version} was downloaded and will be installed when PKGo restarts.",
   "update.availableInfo": "Version {version} is available to download.",
-  "update.upToDate": "You have the latest version."
+  "update.upToDate": "You have the latest version.",
+
+  "deleteFiles.title": "Delete from PC",
+  "deleteFiles.summary": "{what} go to the trash, freeing {size}.",
+  "deleteFiles.and": " and ",
+  "deleteFiles.folders": "{count} folder(s)",
+  "deleteFiles.files": "{count} file(s)",
+  "deleteFiles.note": "A folder is deleted whole only when it belongs to that game alone. Everything can be restored from the trash.",
+  "deleteFiles.busy": "{count} package(s) being sent to the PS4 are left out.",
+  "deleteFiles.more": "and {count} more",
+  "deleteFiles.confirm": "Move to trash",
+  "deleteFiles.deleting": "Moving…",
+  "deleteFiles.done": "{count} package(s) moved to the trash.",
+  "deleteFiles.failed": "Could not move to the trash: {path}",
+  "deleteFiles.nothing": "The checked files are no longer on the PC.",
+  "deleteFiles.onlyBusy": "The checked packages are being sent to the PS4: cancel the sending to delete them."
 }

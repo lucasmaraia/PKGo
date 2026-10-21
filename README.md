@@ -12,6 +12,7 @@ No installer app has to be open on the console.
 - **Library on your PC**: add any number of folders (subfolders included), or drag folders and PKGs onto the window, and see each PKG with its cover, title, version and type (game, update, DLC or app/homebrew).
 - **One-click install**: PKGo serves the file over your network and the PS4 downloads it in the background, with progress, speed and time left. Packages queue up and install one after another.
 - **Check several packages** and install them at once (games first, then updates and DLCs), or check all that the filter shows.
+- **Delete from the PC**: checked packages go to the trash; a folder that belongs to that game alone goes with them (never a library folder or one of your own folders).
 - **Install all updates**: one button queues every update newer than the one on the PS4, and the DLCs it does not have yet.
 - **Follows the PS4 in real time**: failures, downloads cancelled or games deleted on the console show up right away. Failed downloads are retried, and cancelled or failed ones are removed from the PS4 download list, so no failed entry stays in its notifications.
 - **Console view**: lists the games and apps installed on the PS4, with version, update, DLC count and space used.

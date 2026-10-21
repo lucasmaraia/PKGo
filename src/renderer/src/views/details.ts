@@ -90,7 +90,8 @@ function renderLibraryItem(id: string, body: HTMLElement): void {
       `<div class="menu">
         ${installButton}
         ${cancelButton}
-        <button type="button" class="menu-item" data-action="removeFromLibrary" data-id="${item.id}" ${active ? 'disabled' : ''}>${ICON.trash}${esc(t('details.removeFromLibrary'))}</button>
+        <button type="button" class="menu-item" data-action="removeFromLibrary" data-id="${item.id}" ${active ? 'disabled' : ''}>${ICON.close}${esc(t('details.removeFromLibrary'))}</button>
+        <button type="button" class="menu-item" data-action="deleteFromPc" data-id="${item.id}" ${active ? 'disabled' : ''}>${ICON.trash}${esc(t('details.deleteFromPc'))}</button>
         ${closeItem()}
       </div>` +
       infoList([

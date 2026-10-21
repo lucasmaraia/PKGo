@@ -132,6 +132,10 @@
             <svg viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
             <span id="installSelectedLabel"></span>
           </button>
+          <button class="btn small" data-action="deleteSelected" id="deleteSelected" hidden>
+            <svg viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" /></svg>
+            <span id="deleteSelectedLabel"></span>
+          </button>
           <button class="btn small" data-action="clearSelection" id="clearSelection" hidden>
             <span data-i18n="library.clearSelection"></span>
           </button>
@@ -251,6 +255,22 @@
           <footer>
             <button class="btn" value="cancel" data-i18n="common.cancel"></button>
             <button class="btn" id="confirmUninstall" type="button"></button>
+          </footer>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="deleteFiles" class="band">
+      <form method="dialog">
+        <div class="band-inner">
+          <h2 data-i18n="deleteFiles.title"></h2>
+          <p id="deleteSummary"></p>
+          <ul class="delete-list" id="deleteList"></ul>
+          <p class="note" data-i18n="deleteFiles.note"></p>
+          <p class="note warn" id="deleteBusy" hidden></p>
+          <footer>
+            <button class="btn" value="cancel" data-i18n="common.cancel"></button>
+            <button class="btn" id="confirmDelete" type="button"></button>
           </footer>
         </div>
       </form>

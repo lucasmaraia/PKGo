@@ -101,6 +101,8 @@ export function renderSelection(): void {
   const count = store.selected.size;
   $('#selectedCount').textContent = count ? t('library.selectedCount', {count}) : '';
   $('#installSelected').hidden = !count;
+  $('#deleteSelected').hidden = !count;
+  $('#deleteSelectedLabel').textContent = t('library.deleteSelected', {count});
   $('#clearSelection').hidden = !count;
   $('#installSelectedLabel').textContent = t('library.installSelected', {count});
 }

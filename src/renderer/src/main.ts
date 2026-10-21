@@ -20,6 +20,7 @@ import {
   useConsole,
 } from './views/settings';
 import {toast} from './views/toast';
+import {initDeleteFiles, isDeletingFiles, openDeleteFiles} from './views/deleteFiles';
 import {initUninstall, isUninstalling, openUninstall, updateUninstall} from './views/uninstall';
 
 const api = window.api;
@@ -115,6 +116,10 @@ async function onAction(el: HTMLElement): Promise<void> {
       else for (const i of visible) store.selected.delete(i.id);
       return renderSelection();
     }
+    case 'deleteSelected':
+      return openDeleteFiles([...store.selected]);
+    case 'deleteFromPc':
+      return openDeleteFiles([el.dataset.id!]);
     case 'clearSelection':
       store.selected.clear();
       return renderSelection();
@@ -167,10 +172,14 @@ async function onAction(el: HTMLElement): Promise<void> {
   }
 }
 
-/** Closes the panel on top, as Escape does (not while it is deleting a game). */
+/** A delete confirmation in the middle of deleting: it may not be closed. */
+const isBusyDialog = (dialog: HTMLDialogElement): boolean =>
+  (dialog.id === 'uninstall' && isUninstalling()) || (dialog.id === 'deleteFiles' && isDeletingFiles());
+
+/** Closes the panel on top, as Escape does (not while it is deleting). */
 function closeTopDialog(): void {
   const dialog = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);
-  if (dialog && !(dialog.id === 'uninstall' && isUninstalling())) dialog.close();
+  if (dialog && !isBusyDialog(dialog)) dialog.close();
 }
 
 /** Adds folders and PKG files dropped on the window. */
@@ -269,8 +278,8 @@ function bindEvents(): void {
       if (e.target !== dialog) return;
       const r = dialog.getBoundingClientRect();
       const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-      // The uninstall confirmation stays while it is deleting.
-      if (!inside && !(dialog.id === 'uninstall' && isUninstalling())) dialog.close();
+      // The delete confirmations stay while they are deleting.
+      if (!inside && !isBusyDialog(dialog)) dialog.close();
     });
   }
   bindDrop();
@@ -323,6 +332,7 @@ function bindEvents(): void {
 async function main(): Promise<void> {
   initDetails();
   initUninstall();
+  initDeleteFiles();
   initSettings();
   bindEvents();
   startClock();

@@ -116,6 +116,9 @@ function runInBackground(win: BrowserWindow): void {
   tray.on('click', showWindow);
 }
 
+/** End-to-end tests: a plain folder stands in for the system trash. */
+const TEST_TRASH = process.env.PKGO_TRASH_DIR;
+
 // Separate data folder, e.g. for the end-to-end tests.
 if (process.env.PKGO_USER_DATA) app.setPath('userData', process.env.PKGO_USER_DATA);
 
@@ -136,6 +139,12 @@ if (!app.requestSingleInstanceLock()) {
         ? path.join(process.resourcesPath, 'payloads')
         : path.join(app.getAppPath(), 'resources', 'payloads'),
       systemLanguage: matchLanguage(app.getPreferredSystemLanguages()[0] || app.getLocale()),
+      trash: TEST_TRASH
+        ? file => fs.promises.rename(file, path.join(TEST_TRASH, path.basename(file)))
+        : file => shell.trashItem(file),
+      protectedDirs: (['home', 'desktop', 'documents', 'downloads', 'music', 'pictures', 'videos'] as const).map(name =>
+        app.getPath(name),
+      ),
     });
     registerMediaProtocol(core);
     const updater = new Updater(core);

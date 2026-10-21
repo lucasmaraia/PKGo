@@ -8,6 +8,8 @@ import {
   type AddedPaths,
   type AppState,
   type ConfigPatch,
+  type DeletePlan,
+  type DeleteResult,
   type DiscoveredConsole,
   type Job,
   type Language,
@@ -24,6 +26,7 @@ import {KlogMonitor, type KlogEvent} from './console/KlogMonitor';
 import {ActivityLog, redactHome} from './diagnostics/ActivityLog';
 import {AppError, hex, toErrorInfo} from './errors';
 import {InstallQueue} from './install/InstallQueue';
+import {planDeletion, type DeleteTarget} from './library/DiskCleaner';
 import {LibraryService, pkgId, type LibraryEntry} from './library/LibraryService';
 import {discoverConsoles} from './network/discovery';
 import {lanIp} from './network/lan';
@@ -41,6 +44,10 @@ export interface AppCoreOptions {
   configFile: string;
   /** Folder with install.bin and tools.bin. */
   payloadDir: string;
+  /** Moves a file or folder to the system trash (deleting from the PC needs it). */
+  trash?: (path: string) => Promise<void>;
+  /** The user's own folders (home, Downloads…): never deleted as a game folder. */
+  protectedDirs?: string[];
   systemLanguage: Language;
 }
 
@@ -497,6 +504,52 @@ export class AppCore extends EventEmitter<{change: []}> {
 
   rescan(): Promise<void> {
     return this.library.rescan();
+  }
+
+  /** Deletion plan for library items, leaving out the ones being sent to the PS4. */
+  private async deletion(ids: string[]): Promise<{targets: DeleteTarget[]; busy: number}> {
+    const sending = new Set(this.queue.jobs.filter(j => ACTIVE_JOB_STATES.includes(j.state)).map(j => j.pkgId));
+    const entries = [...new Set(ids)].map(id => this.library.get(id)).filter(e => e !== undefined);
+    const free = entries.filter(e => !sending.has(e.id));
+    const protectedDirs = [...(this.options.protectedDirs ?? []), ...this.config.get().folders.map(f => f.path)];
+    const targets = await planDeletion(free, protectedDirs);
+    return {targets, busy: entries.length - free.length};
+  }
+
+  async planDelete(ids: string[]): Promise<DeletePlan> {
+    const {targets, busy} = await this.deletion(ids);
+    return {
+      targets: targets.map(({path, folder, size}) => ({path, folder, size})),
+      size: targets.reduce((sum, t) => sum + t.size, 0),
+      busy,
+    };
+  }
+
+  /** Moves library PKGs (or their own folders) to the trash and drops them from the library. */
+  async deleteFromDisk(ids: string[]): Promise<DeleteResult> {
+    const trash = this.options.trash;
+    if (!trash) throw new AppError('trashUnavailable');
+    // Planned again: files may have changed since the confirmation was shown.
+    const {targets} = await this.deletion(ids);
+    const failed: string[] = [];
+    const gone: string[] = [];
+    for (const target of targets) {
+      try {
+        await trash(target.path);
+        gone.push(...target.ids);
+        this.log.add(`trashed ${target.folder ? 'folder' : 'file'} ${target.path}`);
+      } catch (e) {
+        failed.push(target.path);
+        this.log.add(`trash ${target.path} failed: ${JSON.stringify(toErrorInfo(e))}`);
+      }
+    }
+    if (gone.length) {
+      const removed = new Set(gone.map(id => this.library.get(id)?.path).filter(p => p !== undefined));
+      const {files} = this.config.get();
+      this.config.update({files: files.filter(f => !removed.has(path.resolve(f)))});
+      for (const id of gone) this.library.delete(id);
+    }
+    return {deleted: gone.length, failed};
   }
 
   /** Hides a PKG from the library; the file stays on disk. */

@@ -159,6 +159,21 @@ export interface AppState {
   payloads: {install: boolean; tools: boolean};
 }
 
+/** What "delete from PC" would move to the trash. */
+export interface DeletePlan {
+  targets: {path: string; folder: boolean; size: number}[];
+  size: number;
+  /** Checked packages left alone because they are being sent to the PS4. */
+  busy: number;
+}
+
+export interface DeleteResult {
+  /** Library items whose files went to the trash. */
+  deleted: number;
+  /** Files or folders the trash refused (in use, no recycle bin on that drive…). */
+  failed: string[];
+}
+
 export interface AddedPaths {
   folders: number;
   files: number;
@@ -207,6 +222,10 @@ export interface Api {
   installUpdates(): Promise<number>;
   /** Queues the given library items (games first); returns how many were queued. */
   installMany(ids: string[]): Promise<number>;
+  /** What deleting these library items from the PC would move to the trash. */
+  planDelete(ids: string[]): Promise<DeletePlan>;
+  /** Moves their files (or their own folders) to the trash. */
+  deleteFromDisk(ids: string[]): Promise<DeleteResult>;
   cancelJob(jobId: number): Promise<void>;
   clearFinished(): Promise<void>;
   refreshConsole(): Promise<void>;

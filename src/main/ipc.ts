@@ -41,6 +41,9 @@ export function registerIpc(core: AppCore, updater: Updater, getWindow: () => Br
   handle('removeFromLibrary', (id: string) => core.removeFromLibrary(id));
   handle('install', (id: string) => core.install(id));
   handle('installUpdates', () => core.installUpdates());
+  const ids = (value: unknown) => (Array.isArray(value) ? value.filter((i): i is string => typeof i === 'string') : []);
+  handle('planDelete', (list: unknown) => core.planDelete(ids(list)));
+  handle('deleteFromDisk', (list: unknown) => core.deleteFromDisk(ids(list)));
   handle('installMany', (ids: string[]) =>
     core.installMany(Array.isArray(ids) ? ids.filter(i => typeof i === 'string') : []),
   );
