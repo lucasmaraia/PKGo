@@ -41,7 +41,10 @@ Download the latest release:
 | Windows | `PKGo-Setup-x.y.z.exe` (installer) or `-Portable-` (no install) |
 | Linux   | `pkgo-x.y.z-x86_64.AppImage` or `pkgo-x.y.z-amd64.deb`          |
 
-On Linux, the `.deb` sets up everything. For the AppImage: `chmod +x` it first. On Ubuntu 24.04 and newer, which restrict the Chromium sandbox for AppImages, start it with `--no-sandbox` if it does not open.
+On Linux:
+
+- **`.deb`** (Debian, Ubuntu, Mint…): `sudo apt install ./pkgo-x.y.z-amd64.deb` sets up everything, menu entry included.
+- **AppImage** (most distributions): `chmod +x` it first. Like every AppImage, it needs FUSE 2, which Ubuntu 22.04 and newer no longer include: install it with `sudo apt install libfuse2t64` (`libfuse2` on 22.04), or start the AppImage with `--appimage-extract-and-run`. On Ubuntu 24.04 and newer, which restrict the Chromium sandbox for AppImages, add `--no-sandbox` if it still does not open.
 
 On first launch, PKGo looks for your PS4. If your firewall asks, allow it on **private networks**: the console downloads packages from your PC.
 
