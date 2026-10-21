@@ -145,3 +145,30 @@ test('adds dropped folders and PKG files', async () => {
   await expect(page.locator('#grid .card')).toHaveCount(4);
   await expect(page.evaluate(() => window.api.addPaths(['nothing-here']))).rejects.toThrow();
 });
+
+test('checks tiles and queues them, games before updates', async () => {
+  const cards = page.locator('#grid .card');
+  // The checkbox checks the tile without opening it.
+  await cards.first().locator('.pick').click();
+  await expect(page.locator('#details')).toBeHidden();
+  await expect(page.locator('#selectedCount')).toHaveText('1 checked');
+  await expect(cards.first()).toHaveClass(/selected/);
+  // Space on a focused tile checks it too.
+  await cards.nth(1).focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#selectedCount')).toHaveText('2 checked');
+  // Check all follows the filter: only the app is visible here.
+  await page.locator('.chip[data-kind="app"]').click();
+  await page.locator('#selectAll').uncheck();
+  await page.locator('.chip[data-kind="all"]').click();
+  await page.locator('#selectAll').check();
+  await expect(page.locator('#selectedCount')).toHaveText('3 checked');
+  await page.locator('[data-action="installSelected"]').click();
+  await expect(page.locator('#selectedCount')).toHaveText('');
+  const order = await page.evaluate(async () => {
+    const s = await window.api.getState();
+    return s.jobs.map(j => s.library.find(i => i.id === j.pkgId)!.kind);
+  });
+  expect(order).toHaveLength(3);
+  expect(order[2]).toBe('patch');
+});

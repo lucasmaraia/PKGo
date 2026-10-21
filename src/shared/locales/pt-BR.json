@@ -63,6 +63,12 @@
   "library.installUpdates": "Instalar atualizações ({count})",
   "library.updatesQueued": "{count} atualização(ões) e DLC(s) na fila.",
   "library.alreadyAdded": "Esses itens já estavam na biblioteca.",
+  "library.select": "Marcar para instalar",
+  "library.selectAll": "Marcar todos",
+  "library.selectedCount": "{count} marcado(s)",
+  "library.installSelected": "Instalar marcados ({count})",
+  "library.clearSelection": "Desmarcar",
+  "library.selectedQueued": "{count} pacote(s) na fila.",
 
   "console.refresh": "Atualizar lista",
   "console.updating": "atualizando…",

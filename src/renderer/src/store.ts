@@ -10,6 +10,8 @@ export const store = {
   view: (location.hash === '#ps4' ? 'ps4' : 'pc') as View,
   filter: 'all' as Filter,
   query: '',
+  /** Library items checked for "install selected". */
+  selected: new Set<string>(),
 };
 
 export const requireState = (): AppState => {

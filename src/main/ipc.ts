@@ -34,6 +34,9 @@ export function registerIpc(core: AppCore, getWindow: () => BrowserWindow | null
   handle('removeFromLibrary', (id: string) => core.removeFromLibrary(id));
   handle('install', (id: string) => core.install(id));
   handle('installUpdates', () => core.installUpdates());
+  handle('installMany', (ids: string[]) =>
+    core.installMany(Array.isArray(ids) ? ids.filter(i => typeof i === 'string') : []),
+  );
   handle('cancelJob', (jobId: number) => core.cancelJob(jobId));
   handle('clearFinished', () => core.clearFinished());
   handle('refreshConsole', () => core.refreshConsole());

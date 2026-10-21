@@ -117,6 +117,20 @@
           <input id="search" type="search" data-i18n-placeholder="library.search" autocomplete="off" />
         </label>
 
+        <div class="select-bar" id="selectBar" hidden>
+          <label class="toggle"
+            ><input type="checkbox" id="selectAll" data-action="selectAll" /><span data-i18n="library.selectAll"></span
+          ></label>
+          <span class="note" id="selectedCount"></span>
+          <button class="btn small" data-action="installSelected" id="installSelected" hidden>
+            <svg viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+            <span id="installSelectedLabel"></span>
+          </button>
+          <button class="btn small" data-action="clearSelection" id="clearSelection" hidden>
+            <span data-i18n="library.clearSelection"></span>
+          </button>
+        </div>
+
         <section id="grid" class="grid"></section>
         <section id="consoleGrid" class="grid" hidden></section>
         <section id="consoleStatus" class="empty" hidden></section>

@@ -32,6 +32,7 @@ const api: Api = {
   removeFromLibrary: id => call('removeFromLibrary', id),
   install: id => call('install', id),
   installUpdates: () => call('installUpdates'),
+  installMany: ids => call('installMany', ids),
   cancelJob: jobId => call('cancelJob', jobId),
   clearFinished: () => call('clearFinished'),
   refreshConsole: () => call('refreshConsole'),

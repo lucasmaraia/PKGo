@@ -12,13 +12,17 @@ export interface NavigationActions {
   search(): void;
   /** Options. */
   settings(): void;
+  /** Square: check the focused tile. */
+  select(): void;
   /** The first controller of the session connected (to explain the buttons once). */
   onFirstGamepad(): void;
 }
 
+// Controls taken out of the tab order (tabindex="-1", like the tile
+// checkboxes) are skipped too.
 const FOCUSABLE = [
-  'button:not(:disabled)',
-  'input:not(:disabled):not([type="hidden"])',
+  'button:not(:disabled):not([tabindex="-1"])',
+  'input:not(:disabled):not([type="hidden"]):not([tabindex="-1"])',
   'select:not(:disabled)',
   'summary',
   'a[href]',
@@ -74,7 +78,19 @@ function ownsArrows(el: Element | null, key: string): boolean {
 }
 
 // Standard gamepad mapping (DualShock 4 / DualSense / Xbox).
-const BUTTON = {cross: 0, circle: 1, triangle: 3, l1: 4, r1: 5, options: 9, up: 12, down: 13, left: 14, right: 15};
+const BUTTON = {
+  cross: 0,
+  circle: 1,
+  square: 2,
+  triangle: 3,
+  l1: 4,
+  r1: 5,
+  options: 9,
+  up: 12,
+  down: 13,
+  left: 14,
+  right: 15,
+};
 const REPEAT_DELAY = 350;
 const REPEAT_RATE = 120;
 const STICK = 0.5;
@@ -129,6 +145,7 @@ export function initNavigation(actions: NavigationActions): void {
       });
       press(id + 'circle', now, b(BUTTON.circle), actions.back);
       press(id + 'triangle', now, b(BUTTON.triangle), actions.search);
+      press(id + 'square', now, b(BUTTON.square), actions.select);
       press(id + 'l1', now, b(BUTTON.l1), () => actions.switchTab(-1));
       press(id + 'r1', now, b(BUTTON.r1), () => actions.switchTab(1));
       press(id + 'options', now, b(BUTTON.options), actions.settings);

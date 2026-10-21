@@ -63,6 +63,12 @@
   "library.installUpdates": "Install updates ({count})",
   "library.updatesQueued": "{count} update(s) and DLC(s) queued.",
   "library.alreadyAdded": "These were already in the library.",
+  "library.select": "Check to install",
+  "library.selectAll": "Check all",
+  "library.selectedCount": "{count} checked",
+  "library.installSelected": "Install checked ({count})",
+  "library.clearSelection": "Uncheck",
+  "library.selectedQueued": "{count} package(s) queued.",
 
   "console.refresh": "Refresh list",
   "console.updating": "refreshing…",

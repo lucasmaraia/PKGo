@@ -12,6 +12,7 @@ import {
   type Job,
   type Language,
   type LibraryItem,
+  type PkgKind,
   type Ps4Status,
   type UninstallTarget,
 } from '@shared/types';
@@ -47,6 +48,8 @@ const STATUS_INTERVAL = 5000;
 /** The PS4 keeps each DLC in a folder named after the end of its content ID (UP0000-CUSA00000_00-<label>). */
 export const dlcLabel = (contentId: string | null | undefined): string | null =>
   /^[A-Z]{2}\d{4}-[A-Z]{4}\d{5}_\d{2}-([A-Z0-9]{16})$/.exec(contentId || '')?.[1] ?? null;
+/** Order of a batch install: a game before its update and DLCs. */
+const KIND_ORDER: Record<PkgKind, number> = {game: 0, app: 0, patch: 1, dlc: 2, other: 3};
 /** Seconds between console re-reads after a download (about five minutes in total). */
 const WATCH_DELAYS = [5, 10, 15, 20, 30, 30, 60, 60, 90];
 
@@ -503,13 +506,23 @@ export class AppCore extends EventEmitter<{change: []}> {
 
   /** Queues every pending update and DLC (AppState.updates); returns how many. */
   installUpdates(): number {
+    return this.installMany(this.getState().updates);
+  }
+
+  /**
+   * Queues several packages: games and apps first, then updates, then DLCs,
+   * so each game is on the PS4 before its add-ons. Skips the ones that cannot
+   * be queued (unreadable, gone, already queued); returns how many were.
+   */
+  installMany(ids: string[]): number {
+    const rank = (id: string) => KIND_ORDER[this.library.get(id)?.info.kind || 'other'];
     let queued = 0;
-    for (const id of this.getState().updates) {
+    for (const id of [...new Set(ids)].sort((a, b) => rank(a) - rank(b))) {
       try {
         this.queue.enqueue(id);
         queued++;
       } catch {
-        // Removed or queued meanwhile: skip it.
+        // Removed, unreadable or queued meanwhile: skip it.
       }
     }
     return queued;

@@ -9,7 +9,7 @@ import {invalidateActivity, notifyTransitions, renderActivity} from './views/act
 import {invalidateConsole, renderConsole} from './views/console';
 import {closeDetails, initDetails, invalidateDetails, openDetails, renderDetails} from './views/details';
 import {renderStatus, renderView, startClock} from './views/header';
-import {invalidateLibrary, renderLibrary} from './views/library';
+import {invalidateLibrary, renderLibrary, renderSelection, visibleItems} from './views/library';
 import {
   initSettings,
   ipFieldValue,
@@ -98,6 +98,30 @@ async function onAction(el: HTMLElement): Promise<void> {
       if (queued) toast(t('library.updatesQueued', {count: queued}), 'success');
       return;
     }
+    case 'toggleSelect': {
+      const id = el.dataset.id!;
+      if ((el as HTMLInputElement).checked) store.selected.add(id);
+      else store.selected.delete(id);
+      return renderSelection();
+    }
+    case 'selectAll': {
+      const visible = visibleItems().filter(i => !i.error);
+      if ((el as HTMLInputElement).checked) for (const i of visible) store.selected.add(i.id);
+      else for (const i of visible) store.selected.delete(i.id);
+      return renderSelection();
+    }
+    case 'clearSelection':
+      store.selected.clear();
+      return renderSelection();
+    case 'installSelected': {
+      if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
+      const queued = await run(() => api.installMany([...store.selected]));
+      if (queued === undefined) return;
+      store.selected.clear();
+      renderSelection();
+      toast(t('library.selectedQueued', {count: queued}), queued ? 'success' : '');
+      return;
+    }
     case 'copyDiagnostics':
       if ((await run(() => api.copyDiagnostics().then(() => true))) === true) {
         toast(t('settings.diagnosticsCopied'), 'success');
@@ -179,6 +203,17 @@ function bindDrop(): void {
   });
 }
 
+/** Checkboxes: handled on "change", never as clicks. */
+const CHECKBOX_ACTIONS = new Set(['toggleRecursive', 'toggleSelect', 'selectAll']);
+
+/** Checks or unchecks a library tile (Space, or Square on a controller). */
+function toggleTile(card: HTMLElement): void {
+  const box = card.querySelector<HTMLInputElement>('.pick input');
+  if (!box || box.disabled) return;
+  box.checked = !box.checked;
+  void onAction(box);
+}
+
 function setView(view: View): void {
   store.view = view;
   history.replaceState(null, '', view === 'ps4' ? '#ps4' : '#');
@@ -199,8 +234,9 @@ function bindEvents(): void {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-action], .chip, .tab[data-view], .card');
     if (!el) return;
     if (el.matches('[data-action]')) {
-      // Checkboxes act on "change"; let their click through.
-      if (el.dataset.action === 'toggleRecursive') return;
+      // Checkboxes act on "change"; let their click through (and keep a
+      // tile's checkbox from opening the tile).
+      if (CHECKBOX_ACTIONS.has(el.dataset.action!)) return;
       void onAction(el);
     } else if (el.classList.contains('chip')) setFilter(el.dataset.kind as Filter);
     else if (el.dataset.view) setView(el.dataset.view as View);
@@ -210,7 +246,7 @@ function bindEvents(): void {
   });
   document.addEventListener('change', e => {
     const el = e.target as HTMLElement;
-    if (el.dataset.action === 'toggleRecursive') void onAction(el);
+    if (el instanceof HTMLInputElement && CHECKBOX_ACTIONS.has(el.dataset.action!)) void onAction(el);
   });
 
   // Side panels and dialogs close on a click outside them (on the backdrop).
@@ -239,12 +275,16 @@ function bindEvents(): void {
     renderConsole();
   });
 
-  // Tiles work like the PS4 library: Enter opens the options.
+  // Tiles work like the PS4 library: Enter opens the options, Space checks a PC tile.
   document.addEventListener('keydown', e => {
     const card = (e.target as HTMLElement).closest?.<HTMLElement>('.card');
-    if (card && (e.key === 'Enter' || e.key === ' ')) {
+    if (!card) return;
+    if (e.key === 'Enter' || (e.key === ' ' && !card.dataset.id)) {
       e.preventDefault();
       card.click();
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      toggleTile(card);
     }
   });
 
@@ -258,6 +298,10 @@ function bindEvents(): void {
       if (!document.querySelector('dialog[open]')) $<HTMLInputElement>('#search').focus();
     },
     settings: () => openSettings(),
+    select: () => {
+      const card = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('#grid .card');
+      if (card) toggleTile(card);
+    },
     onFirstGamepad: () => toast(t('nav.gamepadConnected')),
   });
 }

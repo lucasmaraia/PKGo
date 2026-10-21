@@ -188,6 +188,8 @@ export interface Api {
   install(id: string): Promise<void>;
   /** Queues every entry of AppState.updates; returns how many were queued. */
   installUpdates(): Promise<number>;
+  /** Queues the given library items (games first); returns how many were queued. */
+  installMany(ids: string[]): Promise<number>;
   cancelJob(jobId: number): Promise<void>;
   clearFinished(): Promise<void>;
   refreshConsole(): Promise<void>;

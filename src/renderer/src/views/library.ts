@@ -8,7 +8,8 @@ import {cover, isActive, jobLabel, kindLabel, latestJob, metaLine, percent} from
 
 let gridKey = '';
 
-function visibleItems() {
+/** Library items the current filter and search show. */
+export function visibleItems() {
   const q = store.query.trim().toLowerCase();
   return requireState().library.filter(
     i =>
@@ -31,7 +32,10 @@ export function renderLibrary(): void {
     store.query,
     items.map(i => [i.id, i.title, i.installed, i.installedVersion, i.newer, i.error, i.hasIcon]),
   ]);
-  if (key === gridKey) return renderTileProgress();
+  if (key === gridKey) {
+    renderTileProgress();
+    return renderSelection();
+  }
   gridKey = key;
   $('#grid').innerHTML =
     items.length || !state.library.length
@@ -41,6 +45,9 @@ export function renderLibrary(): void {
     <article class="card" data-id="${i.id}" tabindex="0" title="${esc(i.path)}">
       <div class="tile-art">
         ${cover(i)}
+        <label class="pick" data-action="toggleSelect" title="${esc(t('library.select'))}">
+          <input type="checkbox" data-action="toggleSelect" data-id="${i.id}" tabindex="-1" aria-label="${esc(t('library.select'))}" ${i.error ? 'disabled' : ''}>
+        </label>
         ${
           i.installed
             ? `<span class="flag" title="${esc(t('library.installedOnPs4'))}">${ICON.check}</span>`
@@ -66,6 +73,35 @@ export function renderLibrary(): void {
           .join('')
       : `<p class="empty">${esc(t('library.noResults'))}</p>`;
   renderTileProgress(true);
+  renderSelection();
+}
+
+/** Checked tiles and the selection bar above the grid. */
+export function renderSelection(): void {
+  const state = requireState();
+  const usable = new Set(state.library.filter(i => !i.error).map(i => i.id));
+  for (const id of store.selected) if (!usable.has(id)) store.selected.delete(id);
+  for (const card of $$('#grid .card')) {
+    const on = store.selected.has(card.dataset.id!);
+    card.classList.toggle('selected', on);
+    const box = card.querySelector<HTMLInputElement>('.pick input');
+    if (box) box.checked = on;
+  }
+  document.body.classList.toggle('selecting', store.selected.size > 0);
+
+  const bar = $('#selectBar');
+  bar.hidden = store.view !== 'pc' || !state.library.length;
+  const visible = visibleItems().filter(i => usable.has(i.id));
+  const checked = visible.filter(i => store.selected.has(i.id)).length;
+  const all = $<HTMLInputElement>('#selectAll');
+  all.checked = visible.length > 0 && checked === visible.length;
+  all.indeterminate = checked > 0 && checked < visible.length;
+  all.disabled = !visible.length;
+  const count = store.selected.size;
+  $('#selectedCount').textContent = count ? t('library.selectedCount', {count}) : '';
+  $('#installSelected').hidden = !count;
+  $('#clearSelection').hidden = !count;
+  $('#installSelectedLabel').textContent = t('library.installSelected', {count});
 }
 
 /** Progress overlay at the bottom of each tile, like a PS4 download. */
