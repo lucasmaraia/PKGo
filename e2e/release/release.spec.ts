@@ -51,7 +51,8 @@ function writePkg(rel: string, sfo: Record<string, string | number>, contentId: 
 const state = () => page.evaluate(() => window.api.getState());
 
 test.beforeAll(async () => {
-  test.setTimeout(240_000);
+  // A container installs the package before starting: allow minutes.
+  test.setTimeout(600_000);
   fs.rmSync(HOST, {recursive: true, force: true});
   fs.mkdirSync(path.join(HOST, 'data'), {recursive: true});
   fs.mkdirSync(path.join(HOST, 'trash'));
@@ -100,7 +101,7 @@ test.beforeAll(async () => {
       browser = await chromium.connectOverCDP(CDP);
       break;
     } catch (e) {
-      if (i > 150) throw e;
+      if (i > 500) throw e;
       await new Promise(r => setTimeout(r, 1000));
     }
   }
@@ -120,7 +121,10 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  // Closing the browser over DevTools quits the app.
+  // Disconnecting from DevTools leaves the app running: close its window,
+  // which quits it (nothing is being sent, so it does not ask).
+  await page?.evaluate(() => window.close()).catch(() => {});
+  await new Promise(r => setTimeout(r, 3000));
   await browser?.close().catch(() => {});
   launcher?.kill();
   if (process.env.PKGO_STOP) execSync(process.env.PKGO_STOP, {stdio: 'ignore'});
