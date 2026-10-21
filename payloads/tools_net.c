@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-// Patched by the PKG Sender with the PC address (IPv4 + port, network order).
+// Patched by the PKGo with the PC address (IPv4 + port, network order).
 struct
 {
 	uint32_t addr;

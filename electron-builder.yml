@@ -1,5 +1,5 @@
-appId: io.github.lucasmaraia.pkgsender
-productName: PKG Sender
+appId: io.github.lucasmaraia.pkgo
+productName: PKGo
 copyright: Copyright © 2026 lucasmaraia and contributors
 directories:
   output: dist

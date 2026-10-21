@@ -128,6 +128,12 @@ strong {
   width: 20px;
   height: 20px;
 }
+.brand svg.logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
 .topbar-right {
   display: flex;
   align-items: center;

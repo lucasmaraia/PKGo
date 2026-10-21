@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- PKGo: a package taking off. Source of resources/icon.png and build/icon.ico (npm run icons). -->
+  <rect width="100" height="100" rx="22" fill="#0a63d6"/>
+  <circle cx="78" cy="22" r="16" fill="#2b7ff0"/>
+  <path d="M10 92 L34 68 M24 94 L42 76 M6 78 L26 58" stroke="#cfe4ff" stroke-width="5" stroke-linecap="round"/>
+  <g transform="rotate(-20 58 46)" stroke="#5a3510" stroke-width="2.2" stroke-linejoin="round">
+    <path d="M36 34 L58 23 L80 34 L58 45Z" fill="#ffcf7a"/>
+    <path d="M36 34 L58 45 L58 69 L36 58Z" fill="#f0a64a"/>
+    <path d="M58 45 L80 34 L80 58 L58 69Z" fill="#d9862c"/>
+    <path d="M47 28.5 L69 39.5" stroke="#fff1d0" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

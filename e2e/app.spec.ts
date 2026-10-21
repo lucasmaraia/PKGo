@@ -26,7 +26,7 @@ function writePkg(file: string, sfo: Record<string, string | number>, contentId:
 }
 
 test.beforeEach(async () => {
-  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pkg-sender-e2e-'));
+  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pkgo-e2e-'));
   library = path.join(dataDir, 'library');
   writePkg(
     path.join(library, 'Alpha.pkg'),
@@ -50,7 +50,7 @@ test.beforeEach(async () => {
   );
   app = await electron.launch({
     args: [ROOT, ...(process.platform === 'linux' ? ['--no-sandbox'] : [])],
-    env: {...process.env, PKG_SENDER_USER_DATA: dataDir},
+    env: {...process.env, PKGO_USER_DATA: dataDir},
   });
   page = await app.firstWindow();
   await expect(page.locator('#grid .card')).toHaveCount(3);
@@ -112,7 +112,7 @@ test('copies a diagnostic report without personal paths', async () => {
   await page.locator('[data-action="copyDiagnostics"]').click();
   await expect(page.locator('.toast.success')).toBeVisible();
   const report = await app.evaluate(({clipboard}) => clipboard.readText());
-  expect(report).toContain('PKG Sender diagnostics');
+  expect(report).toContain('PKGo diagnostics');
   expect(report).toContain('packages: 3');
   expect(report).not.toContain(os.homedir());
 });

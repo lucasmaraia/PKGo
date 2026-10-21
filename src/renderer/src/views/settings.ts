@@ -75,7 +75,7 @@ export function renderSettings(): void {
   }
   $('#aboutText').innerHTML = esc(t('settings.aboutText', {version: window.api.version})).replace(
     'GitHub',
-    '<a href="https://github.com/lucasmaraia/pkg-sender" target="_blank" rel="noreferrer">GitHub</a>',
+    '<a href="https://github.com/lucasmaraia/pkgo" target="_blank" rel="noreferrer">GitHub</a>',
   );
   renderDiscovered();
 }

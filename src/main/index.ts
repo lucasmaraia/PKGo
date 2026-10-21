@@ -1,4 +1,5 @@
 // Electron main process: one window, the core services and the IPC bridge.
+import fs from 'node:fs';
 import path from 'node:path';
 import {app, BrowserWindow, dialog, Menu, nativeImage, Notification, shell, Tray} from 'electron';
 import {AppCore} from '@core/AppCore';
@@ -24,7 +25,7 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     show: false,
     backgroundColor: '#01113d',
-    title: 'PKG Sender',
+    title: 'PKGo',
     icon: ICON,
     autoHideMenuBar: true,
     webPreferences: {
@@ -50,7 +51,7 @@ function createWindow(): BrowserWindow {
     event.preventDefault();
     const choice = dialog.showMessageBoxSync(win, {
       type: 'question',
-      title: 'PKG Sender',
+      title: 'PKGo',
       message: t('close.busyTitle'),
       detail: t('close.busyDetail'),
       buttons: [t('close.background'), t('close.quit'), t('common.cancel')],
@@ -68,6 +69,22 @@ function createWindow(): BrowserWindow {
   if (process.env.ELECTRON_RENDERER_URL) void win.loadURL(process.env.ELECTRON_RENDERER_URL);
   else void win.loadFile(path.join(__dirname, '../renderer/index.html'));
   return win;
+}
+
+/**
+ * Up to version 2.1 the app was called PKG Sender and kept its settings in
+ * that folder: bring them over on the first start under the new name.
+ */
+function migrateFromPkgSender(configFile: string): void {
+  if (process.env.PKGO_USER_DATA || fs.existsSync(configFile)) return;
+  const old = path.join(app.getPath('appData'), 'PKG Sender', 'config.json');
+  try {
+    if (!fs.existsSync(old)) return;
+    fs.mkdirSync(path.dirname(configFile), {recursive: true});
+    fs.copyFileSync(old, configFile);
+  } catch {
+    // Unreadable: start with default settings.
+  }
 }
 
 function showWindow(): void {
@@ -99,7 +116,7 @@ function runInBackground(win: BrowserWindow): void {
 }
 
 // Separate data folder, e.g. for the end-to-end tests.
-if (process.env.PKG_SENDER_USER_DATA) app.setPath('userData', process.env.PKG_SENDER_USER_DATA);
+if (process.env.PKGO_USER_DATA) app.setPath('userData', process.env.PKGO_USER_DATA);
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -110,8 +127,10 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', showWindow);
 
   void app.whenReady().then(async () => {
+    const configFile = path.join(app.getPath('userData'), 'config.json');
+    migrateFromPkgSender(configFile);
     core = new AppCore({
-      configFile: path.join(app.getPath('userData'), 'config.json'),
+      configFile,
       payloadDir: app.isPackaged
         ? path.join(process.resourcesPath, 'payloads')
         : path.join(app.getAppPath(), 'resources', 'payloads'),
@@ -122,7 +141,7 @@ if (!app.requestSingleInstanceLock()) {
     try {
       await core.start();
     } catch (e) {
-      dialog.showErrorBox('PKG Sender', t('errors.startFailed', {detail: (e as Error).message}));
+      dialog.showErrorBox('PKGo', t('errors.startFailed', {detail: (e as Error).message}));
       app.exit(1);
       return;
     }
@@ -135,7 +154,7 @@ if (!app.requestSingleInstanceLock()) {
           last.state === 'done'
             ? t('jobs.doneToast', {title: last.title})
             : `${last.title}: ${last.error ? translateError(core.language, last.error) : ''}`;
-        new Notification({title: 'PKG Sender', body, icon: ICON}).show();
+        new Notification({title: 'PKGo', body, icon: ICON}).show();
       }
       quitting = true;
       app.quit();

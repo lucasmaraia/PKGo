@@ -7,7 +7,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' app-media: data:; connect-src 'self' ws://localhost:*"
     />
-    <title>PKG Sender</title>
+    <title>PKGo</title>
     <link rel="stylesheet" href="./styles/app.css" />
   </head>
   <body>
@@ -21,8 +21,16 @@
 
     <header class="topbar">
       <div class="brand">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
-        <span>PKG Sender</span>
+        <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+          <rect width="100" height="100" rx="18" fill="#0a63d6" stroke="none" />
+          <path d="M10 92 L34 68 M6 76 L24 58" stroke="#cfe4ff" stroke-width="8" stroke-linecap="round" />
+          <g transform="rotate(-20 58 46)" stroke="#5a3510" stroke-width="3.5" stroke-linejoin="round">
+            <path d="M36 34 L58 23 L80 34 L58 45Z" fill="#ffcf7a" />
+            <path d="M36 34 L58 45 L58 69 L36 58Z" fill="#f0a64a" />
+            <path d="M58 45 L80 34 L80 58 L58 69Z" fill="#d9862c" />
+          </g>
+        </svg>
+        <span>PKGo</span>
       </div>
       <div class="topbar-right">
         <button class="status" id="ps4Status" type="button" data-action="openSettings" data-i18n-title="status.title">

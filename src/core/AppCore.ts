@@ -327,7 +327,7 @@ export class AppCore extends EventEmitter<{change: []}> {
     for (const i of state.library) kinds[i.kind] = (kinds[i.kind] ?? 0) + 1;
     const c = state.console;
     const lines = [
-      'PKG Sender diagnostics',
+      'PKGo diagnostics',
       ...Object.entries(about).map(([k, v]) => `${k}: ${v}`),
       `language: ${state.language}`,
       '',

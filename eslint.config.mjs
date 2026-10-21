@@ -7,7 +7,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['src/core/**', 'src/main/**', 'src/preload/**', 'tests/**', 'e2e/**', '*.config.*'],
+    files: ['src/core/**', 'src/main/**', 'src/preload/**', 'tests/**', 'e2e/**', 'scripts/**', '*.config.*'],
     languageOptions: {globals: globals.node},
   },
   {files: ['src/renderer/**'], languageOptions: {globals: globals.browser}},

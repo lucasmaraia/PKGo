@@ -1,4 +1,6 @@
-# PKG Sender
+<img src="resources/icon.png" width="96" alt="">
+
+# PKGo for PS4
 
 Install and manage PS4 packages over your local network with **GoldHEN**, from Windows or Linux.
 No installer app has to be open on the console.
@@ -8,7 +10,7 @@ No installer app has to be open on the console.
 ## Features
 
 - **Library on your PC**: add any number of folders (subfolders included), or drag folders and PKGs onto the window, and see each PKG with its cover, title, version and type (game, update, DLC or app/homebrew).
-- **One-click install**: PKG Sender serves the file over your network and the PS4 downloads it in the background, with progress, speed and time left. Packages queue up and install one after another.
+- **One-click install**: PKGo serves the file over your network and the PS4 downloads it in the background, with progress, speed and time left. Packages queue up and install one after another.
 - **Install all updates**: one button queues every update newer than the one on the PS4, and the DLCs it does not have yet.
 - **Follows the PS4 in real time**: failures, downloads cancelled or games deleted on the console show up right away. Failed downloads are retried, and cancelled or failed ones are removed from the PS4 download list, so no failed entry stays in its notifications.
 - **Console view**: lists the games and apps installed on the PS4, with version, update, DLC count and space used.
@@ -30,20 +32,20 @@ No installer app has to be open on the console.
 
 Download the latest release:
 
-| System  | File                                                                  |
-| ------- | --------------------------------------------------------------------- |
-| Windows | `PKG Sender-Setup-x.y.z.exe` (installer) or `-Portable-` (no install) |
-| Linux   | `pkg-sender-x.y.z-x86_64.AppImage` or `pkg-sender-x.y.z-amd64.deb`    |
+| System  | File                                                            |
+| ------- | --------------------------------------------------------------- |
+| Windows | `PKGo-Setup-x.y.z.exe` (installer) or `-Portable-` (no install) |
+| Linux   | `pkgo-x.y.z-x86_64.AppImage` or `pkgo-x.y.z-amd64.deb`          |
 
 On Linux, the `.deb` sets up everything. For the AppImage: `chmod +x` it first. On Ubuntu 24.04 and newer, which restrict the Chromium sandbox for AppImages, start it with `--no-sandbox` if it does not open.
 
-On first launch, PKG Sender looks for your PS4. If your firewall asks, allow it on **private networks**: the console downloads packages from your PC.
+On first launch, PKGo looks for your PS4. If your firewall asks, allow it on **private networks**: the console downloads packages from your PC.
 
 ## How it works
 
-- **Install**: PKG Sender sends a small payload to GoldHEN's BinLoader. It registers the download with the PS4's own download service, pointing at PKG Sender's file server. The console then downloads the PKG straight from your PC.
+- **Install**: PKGo sends a small payload to GoldHEN's BinLoader. It registers the download with the PS4's own download service, pointing at PKGo's file server. The console then downloads the PKG straight from your PC.
 - **Delete, and clean up downloads**: another payload calls the system uninstaller, or removes a stopped download from the PS4 download list, and reports the result back.
-- **Real time**: PKG Sender reads GoldHEN's kernel log to see what the PS4 does with each download.
+- **Real time**: PKGo reads GoldHEN's kernel log to see what the PS4 does with each download.
 - **Console list**: read over GoldHEN's FTP server.
 
 The payloads live in [`payloads/`](payloads/README.md), with their sources and build script.
@@ -88,4 +90,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) to help, including how to add a language.
 
 ## License
 
-[GPL-3.0](LICENSE). PKG Sender is not affiliated with Sony Interactive Entertainment. Use it only with content you are entitled to.
+[GPL-3.0](LICENSE). PKGo is not affiliated with Sony Interactive Entertainment. Use it only with content you are entitled to.
