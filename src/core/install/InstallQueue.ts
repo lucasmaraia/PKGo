@@ -22,9 +22,10 @@ export interface InstallContext {
   network: () => {ps4Ip: string; pcIp: string | null; port: number};
   /**
    * Removes a stopped download from the PS4 download list, by task ID or, when
-   * that is unknown (null), by content ID. Resolves false when it could not.
+   * that is unknown (null), by content ID, with what the PS4 had already set
+   * up for it. Resolves false when it could not.
    */
-  removeTask: (task: string | null, entry: LibraryEntry) => Promise<boolean>;
+  removeTask: (task: string | null, entry: LibraryEntry, job: Job) => Promise<boolean>;
   onChange: () => void;
   /** A job is about to be sent to the console. */
   onStart?: (job: Job) => void;
@@ -220,7 +221,7 @@ export class InstallQueue {
     job.cleanup = 'running';
     const done = (async () => {
       await sleep(this.timing.cleanupDelay);
-      const removed = await this.ctx.removeTask(task, entry).catch(() => false);
+      const removed = await this.ctx.removeTask(task, entry, job).catch(() => false);
       this.ctx.log?.(`job ${job.id}: PS4 download ${removed ? 'removed' : 'could not be removed'}`);
       if (job.attempt === attempt) {
         job.cleanup = removed ? 'done' : 'failed';

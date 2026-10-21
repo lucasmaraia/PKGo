@@ -9,6 +9,7 @@ import {
   type AppState,
   type ConfigPatch,
   type DiscoveredConsole,
+  type Job,
   type Language,
   type LibraryItem,
   type Ps4Status,
@@ -60,6 +61,8 @@ export class AppCore extends EventEmitter<{change: []}> {
   private consoleRefreshTimer: NodeJS.Timeout | null = null;
   private readonly installPayload: InstallPayload;
   private readonly toolsPayload: string;
+  /** Jobs that send a game the PS4 did not have (see isNewGame), by job id. */
+  private readonly newGames = new Map<number, boolean>();
   private ps4: Ps4Status = 'checking';
   private statusTimer: NodeJS.Timeout | null = null;
 
@@ -84,10 +87,14 @@ export class AppCore extends EventEmitter<{change: []}> {
         const {ps4Ip} = this.config.get();
         return {ps4Ip, pcIp: lanIp(ps4Ip), port: this.server.port};
       },
-      removeTask: (task, entry) => this.removeTask(task, entry),
+      removeTask: (task, entry, job) => this.removeTask(task, entry, job),
       onChange: changed,
-      // The log tells how the download goes: get it back if another program took it.
-      onStart: () => this.klog.wake(),
+      onStart: job => {
+        // The log tells how the download goes: get it back if another program took it.
+        this.klog.wake();
+        // Judged on the first try: a failed one may leave the game half there.
+        if (!this.newGames.has(job.id)) this.newGames.set(job.id, this.isNewGame(job));
+      },
       onDownloaded: entry => void this.watchInstall(entry),
       log: message => this.log.add(message),
     });
@@ -111,17 +118,49 @@ export class AppCore extends EventEmitter<{change: []}> {
     return {payloadPath: this.toolsPayload, ps4Ip, pcIp};
   }
 
-  /** Removes a stopped download from the PS4 list, so no failed entry stays in its notifications. */
-  private async removeTask(task: string | null, entry: LibraryEntry): Promise<boolean> {
+  /**
+   * Whether a job sends a game (or app) the PS4 does not have. Its download
+   * puts the game on the home screen right away, to be played while it
+   * downloads; stopping it leaves that half-installed game behind.
+   * false when unsure (console list not loaded): never delete on a guess.
+   */
+  private isNewGame(job: Job): boolean {
+    const info = this.library.get(job.pkgId)?.info;
+    if (!info?.titleId || (info.kind !== 'game' && info.kind !== 'app')) return false;
+    if (this.console.state(this.language).state !== 'ready') return false;
+    return !this.console.find(info.titleId);
+  }
+
+  /**
+   * Removes a stopped download from the PS4 list, so no failed entry stays in
+   * its notifications, and the half-installed game it leaves when the game
+   * was not on the PS4 before.
+   */
+  private async removeTask(task: string | null, entry: LibraryEntry, job: Job): Promise<boolean> {
     const contentId = entry.info.contentId || '';
     if (!task && !contentId) return false;
+    let removed: boolean;
     try {
       const r = await removeTaskWithPayload({...this.toolsTarget(), task, contentId});
       this.log.add(`remove download ${task ?? contentId}: stop ${hex(r.stop)}, unregister ${hex(r.unregister)}`);
       // Not found by content ID: there is nothing left to remove.
-      return r.unregister === 0 || (!task && r.stop === TASK_NOT_FOUND);
+      removed = r.unregister === 0 || (!task && r.stop === TASK_NOT_FOUND);
     } catch (e) {
       this.log.add(`remove download ${task ?? contentId} failed: ${JSON.stringify(toErrorInfo(e))}`);
+      return false;
+    }
+    const titleId = entry.info.titleId;
+    // Not re-checked on the console now: the half-installed game may show
+    // there (its folder exists on internal storage) as if it were installed.
+    if (!removed || !titleId || !this.newGames.get(job.id)) return removed;
+    try {
+      await new Promise(r => setTimeout(r, 1000));
+      const r = await uninstallWithPayload({...this.toolsTarget(), titleId, what: 'game'});
+      this.log.add(`remove half-installed ${titleId}: init ${hex(r.init)}, result ${hex(r.result)}`);
+      this.refreshConsoleSoon();
+      return r.result === 0;
+    } catch (e) {
+      this.log.add(`remove half-installed ${titleId} failed: ${JSON.stringify(toErrorInfo(e))}`);
       return false;
     }
   }

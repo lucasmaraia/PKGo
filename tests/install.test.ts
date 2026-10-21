@@ -82,7 +82,7 @@ describe('InstallQueue', () => {
       },
       files: {served, block: id => void blocked.push(id), unblock: id => (blocked = blocked.filter(b => b !== id))},
       network: () => ({ps4Ip: '192.168.0.43', pcIp: '192.168.0.20', port: 8686}),
-      removeTask: async task => {
+      removeTask: async (task: string | null) => {
         removed.push(task);
         return removeWorks;
       },
