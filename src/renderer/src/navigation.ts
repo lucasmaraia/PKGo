@@ -108,6 +108,8 @@ export function initNavigation(actions: NavigationActions): void {
     const pads = navigator.getGamepads().filter(p => p !== null);
     if (!pads.length) {
       frame = 0;
+      // A button held while the controller dropped is not still held when it comes back.
+      held.clear();
       return;
     }
     frame = requestAnimationFrame(poll);
