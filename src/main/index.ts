@@ -6,6 +6,7 @@ import {AppCore} from '@core/AppCore';
 import {matchLanguage, translate, translateError} from '@shared/i18n';
 import {registerIpc} from './ipc';
 import {registerMediaProtocol, registerMediaScheme} from './media';
+import {Updater} from './updater';
 
 const ICON = path.join(__dirname, '../../resources/icon.png');
 
@@ -137,7 +138,8 @@ if (!app.requestSingleInstanceLock()) {
       systemLanguage: matchLanguage(app.getPreferredSystemLanguages()[0] || app.getLocale()),
     });
     registerMediaProtocol(core);
-    registerIpc(core, () => window);
+    const updater = new Updater(core);
+    registerIpc(core, updater, () => window);
     try {
       await core.start();
     } catch (e) {
@@ -160,6 +162,7 @@ if (!app.requestSingleInstanceLock()) {
       app.quit();
     });
     window = createWindow();
+    updater.start();
   });
 
   app.on('window-all-closed', () => app.quit());

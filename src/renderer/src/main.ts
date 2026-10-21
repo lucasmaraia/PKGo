@@ -127,6 +127,12 @@ async function onAction(el: HTMLElement): Promise<void> {
       toast(t('library.selectedQueued', {count: queued}), queued ? 'success' : '');
       return;
     }
+    case 'installUpdate':
+      return void run(() => api.installUpdate());
+    case 'checkUpdates':
+      return void run(() => api.checkUpdates());
+    case 'autoUpdate':
+      return void run(() => api.setConfig({autoUpdate: (el as HTMLInputElement).checked}));
     case 'copyDiagnostics':
       if ((await run(() => api.copyDiagnostics().then(() => true))) === true) {
         toast(t('settings.diagnosticsCopied'), 'success');
@@ -209,7 +215,7 @@ function bindDrop(): void {
 }
 
 /** Checkboxes: handled on "change", never as clicks. */
-const CHECKBOX_ACTIONS = new Set(['toggleRecursive', 'toggleSelect', 'selectAll', 'selectMode']);
+const CHECKBOX_ACTIONS = new Set(['toggleRecursive', 'toggleSelect', 'selectAll', 'selectMode', 'autoUpdate']);
 
 /** Checks or unchecks a library tile, turning selection mode on if needed. */
 function toggleTile(card: HTMLElement): void {

@@ -39,6 +39,8 @@ const api: Api = {
   uninstall: (titleId, what) => call('uninstall', titleId, what),
   discover: () => call('discover'),
   copyDiagnostics: () => call('copyDiagnostics'),
+  checkUpdates: () => call('checkUpdates'),
+  installUpdate: () => call('installUpdate'),
 };
 
 contextBridge.exposeInMainWorld('api', api);

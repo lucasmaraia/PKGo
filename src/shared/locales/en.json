@@ -170,6 +170,8 @@
   "settings.copyDiagnostics": "Copy diagnostics",
   "settings.diagnosticsHint": "Versions, connections and recent events, to attach when reporting a problem.",
   "settings.diagnosticsCopied": "Diagnostics copied.",
+  "settings.autoUpdate": "Look for updates automatically",
+  "settings.checkUpdates": "Check now",
 
   "errors.unexpected": "Something went wrong ({detail}).",
   "errors.startFailed": "PKGo could not start: {detail}",
@@ -206,7 +208,20 @@
   "errors.ps4Cancelled": "The download was cancelled on the PS4.",
   "errors.installFailed": "The PS4 downloaded the package but could not install it (code {code}).",
   "errors.nothingToAdd": "Nothing to add: drop folders or .pkg files.",
+  "errors.updateFailed": "Could not look for updates ({detail}).",
+  "errors.updateUnavailable": "This version does not update itself.",
+  "errors.updateNotReady": "The update has not been downloaded yet.",
+  "errors.updateWaitForJobs": "A package is being sent: update when it finishes.",
 
   "drop.title": "Drop to add to the library",
-  "drop.hint": "Folders join the folder list; .pkg files are added one by one."
+  "drop.hint": "Folders join the folder list; .pkg files are added one by one.",
+
+  "update.restart": "Restart to update to {version}",
+  "update.download": "PKGo {version} available · Download",
+  "update.downloading": "Downloading version {version}… {percent}%",
+  "update.off": "Automatic updates only work in the installed version.",
+  "update.checking": "Looking for updates…",
+  "update.readyInfo": "Version {version} was downloaded and will be installed when PKGo restarts.",
+  "update.availableInfo": "Version {version} is available to download.",
+  "update.upToDate": "You have the latest version."
 }

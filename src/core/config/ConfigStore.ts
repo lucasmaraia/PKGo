@@ -11,6 +11,8 @@ export interface Config {
   /** Port of the server the PS4 downloads PKGs from. */
   serverPort: number;
   language: Language | null;
+  /** Look for new versions by itself. */
+  autoUpdate: boolean;
   folders: FolderEntry[];
   files: string[];
   /** Library ids the user removed (their files stay on disk). */
@@ -22,6 +24,7 @@ export const DEFAULTS: Config = {
   ftpPort: 2121,
   serverPort: 8686,
   language: null,
+  autoUpdate: true,
   folders: [],
   files: [],
   hidden: [],
@@ -47,6 +50,7 @@ export function normalize(raw: unknown): Config {
     ftpPort: port(r.ftpPort, DEFAULTS.ftpPort),
     serverPort: port(r.serverPort, DEFAULTS.serverPort),
     language: LANGUAGES.includes(r.language as Language) ? (r.language as Language) : null,
+    autoUpdate: r.autoUpdate !== false,
     folders,
     files: strings(r.files),
     hidden: strings(r.hidden),

@@ -5,10 +5,26 @@ import {currentLanguage, t} from '../i18n';
 import {requireState, store} from '../store';
 
 export function renderStatus(): void {
-  const {ps4, config} = requireState();
+  const {ps4, config, update} = requireState();
   const pill = $('#ps4Status');
   pill.className = `status ${ps4}`;
   $('.label', pill).textContent = t(`status.${ps4}`, {ip: config.ps4Ip});
+
+  // New version: downloading, ready to install, or (portable) to download.
+  const button = $<HTMLButtonElement>('#updatePill');
+  const version = update.version ?? '';
+  const text =
+    update.state === 'ready'
+      ? t('update.restart', {version})
+      : update.state === 'available' && update.manual
+        ? t('update.download', {version})
+        : update.state === 'downloading'
+          ? t('update.downloading', {version, percent: update.percent ?? 0})
+          : '';
+  button.hidden = !text;
+  button.textContent = text;
+  button.disabled = update.state === 'downloading';
+  button.classList.toggle('ready', update.state === 'ready' || !!update.manual);
 }
 
 export function renderView(): void {

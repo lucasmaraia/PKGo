@@ -25,6 +25,8 @@ export interface PublicConfig {
   /** null follows the system language. */
   language: Language | null;
   folders: FolderEntry[];
+  /** Look for new versions by itself. */
+  autoUpdate: boolean;
 }
 
 export interface LibraryItem {
@@ -153,6 +155,7 @@ export interface AppState {
   /** Library updates and DLCs missing on the PS4, for "install all" (ids). */
   updates: string[];
   klog: KlogStatus;
+  update: UpdateStatus;
   payloads: {install: boolean; tools: boolean};
 }
 
@@ -167,6 +170,20 @@ export interface ConfigPatch {
   ps4Ip?: string;
   ftpPort?: number;
   language?: Language | null;
+  autoUpdate?: boolean;
+}
+
+/**
+ * New versions of the app. 'off': a development build, which cannot update;
+ * 'available' with manual: the portable build, which is downloaded by hand.
+ */
+export interface UpdateStatus {
+  state: 'off' | 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
+  version?: string;
+  percent?: number;
+  manual?: boolean;
+  checkedAt?: number;
+  error?: ErrorInfo;
 }
 
 /** API exposed to the renderer by the preload script (window.api). */
@@ -197,6 +214,10 @@ export interface Api {
   discover(): Promise<DiscoveredConsole[]>;
   /** Copies a diagnostic report (versions, connections, recent events) to the clipboard. */
   copyDiagnostics(): Promise<void>;
+  /** Looks for a new version now. */
+  checkUpdates(): Promise<void>;
+  /** Restarts into the downloaded version, or opens the download page (portable). */
+  installUpdate(): Promise<void>;
 }
 
 /** IPC replies carry errors as data: Electron drops custom fields of thrown errors. */

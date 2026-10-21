@@ -18,6 +18,7 @@ No installer app has to be open on the console.
 - **Delete from the PS4**: remove a game, or only its update, using the system uninstaller. Saved data is kept.
 - **Finds your PS4** on the network automatically, or you can type its IP.
 - **Keyboard and controller**: arrows or the D-pad move around like on the PS4; ✕ chooses, ○ goes back, L1/R1 switch tabs.
+- **Updates itself**: the installer and the Linux AppImage/.deb download new versions in the background and install them on restart (never during a download to the PS4). The portable build tells when a new version is out.
 - **Diagnostics**: one click copies versions, connections and recent events, to attach to a bug report.
 - **English, Español and Português (Brasil)**, following your system language by default.
 

@@ -60,6 +60,7 @@ describe('config normalize', () => {
       ftpPort: 2121,
       serverPort: 8686,
       language: null,
+      autoUpdate: true,
       folders: [
         {path: 'C:\\PKGs', recursive: true},
         {path: '/mnt/pkgs', recursive: false},
@@ -68,6 +69,9 @@ describe('config normalize', () => {
       hidden: ['abc'],
     });
     expect(normalize({ps4Ip: '999.1.1.1'}).ps4Ip).toBe('');
+    // Updates stay on unless turned off explicitly.
+    expect(normalize({autoUpdate: false}).autoUpdate).toBe(false);
+    expect(normalize({autoUpdate: 'no'}).autoUpdate).toBe(true);
   });
 });
 

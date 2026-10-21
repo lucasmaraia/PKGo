@@ -15,6 +15,7 @@ import {
   type PkgKind,
   type Ps4Status,
   type UninstallTarget,
+  type UpdateStatus,
 } from '@shared/types';
 import {ConfigStore} from './config/ConfigStore';
 import {ConsoleService, type RawConsoleItem} from './console/ConsoleService';
@@ -60,6 +61,8 @@ export class AppCore extends EventEmitter<{change: []}> {
   readonly server: PkgFileServer;
   readonly queue: InstallQueue;
   readonly log = new ActivityLog();
+  /** Set by the Electron layer, which is the one that can update the app. */
+  private updateStatus: UpdateStatus = {state: 'off'};
   private readonly klog: KlogMonitor;
   private consoleRefreshTimer: NodeJS.Timeout | null = null;
   private readonly installPayload: InstallPayload;
@@ -200,6 +203,20 @@ export class AppCore extends EventEmitter<{change: []}> {
   private refreshConsoleSoon(delay = 3000): void {
     if (this.consoleRefreshTimer) clearTimeout(this.consoleRefreshTimer);
     this.consoleRefreshTimer = setTimeout(() => void this.console.refresh(), delay);
+  }
+
+  get update(): UpdateStatus {
+    return this.updateStatus;
+  }
+
+  setUpdate(status: UpdateStatus): void {
+    this.updateStatus = status;
+    if (status.state === 'error' || status.state === 'ready') {
+      this.log.add(
+        `update ${status.state} ${status.version ?? ''} ${status.error ? JSON.stringify(status.error) : ''}`,
+      );
+    }
+    this.emit('change');
   }
 
   get language(): Language {
@@ -343,7 +360,13 @@ export class AppCore extends EventEmitter<{change: []}> {
       .sort((a, b) => a.title.localeCompare(b.title, language) || (b.version || '').localeCompare(a.version || ''));
     const consoleState = this.console.state(language);
     return {
-      config: {ps4Ip: config.ps4Ip, ftpPort: config.ftpPort, language: config.language, folders: config.folders},
+      config: {
+        ps4Ip: config.ps4Ip,
+        ftpPort: config.ftpPort,
+        language: config.language,
+        folders: config.folders,
+        autoUpdate: config.autoUpdate,
+      },
       language,
       lanIp: lanIp(config.ps4Ip),
       ps4: this.ps4,
@@ -353,6 +376,7 @@ export class AppCore extends EventEmitter<{change: []}> {
       jobs: this.queue.jobs.map(j => ({...j})),
       updates: consoleState.state === 'ready' ? this.pendingUpdates(library) : [],
       klog: this.klog.status,
+      update: this.updateStatus,
       payloads: {install: this.installPayload.available, tools: fs.existsSync(this.toolsPayload)},
     };
   }
@@ -387,6 +411,7 @@ export class AppCore extends EventEmitter<{change: []}> {
       `ps4: ${config.ps4Ip || '-'} (${state.ps4}), ftp port ${config.ftpPort}`,
       `pc lan ip: ${state.lanIp ?? '-'}, pkg server port ${this.server.port}`,
       `ps4 log (klog): ${state.klog}`,
+      `updates: ${state.update.state}${state.update.version ? ` ${state.update.version}` : ''}, automatic ${config.autoUpdate}`,
       `console list: ${c.state}, ${c.items.length} titles${c.error ? `, error ${JSON.stringify(c.error)}` : ''}`,
       `payloads: install.bin ${payload('install.bin')}, tools.bin ${payload('tools.bin')}`,
       '',

@@ -170,6 +170,8 @@
   "settings.copyDiagnostics": "Copiar diagnóstico",
   "settings.diagnosticsHint": "Versões, conexões e eventos recentes, para anexar ao relatar um problema.",
   "settings.diagnosticsCopied": "Diagnóstico copiado.",
+  "settings.autoUpdate": "Procurar atualizações automaticamente",
+  "settings.checkUpdates": "Procurar agora",
 
   "errors.unexpected": "Algo deu errado ({detail}).",
   "errors.startFailed": "O PKGo não conseguiu iniciar: {detail}",
@@ -206,7 +208,20 @@
   "errors.ps4Cancelled": "O download foi cancelado no PS4.",
   "errors.installFailed": "O PS4 baixou o pacote, mas não conseguiu instalá-lo (código {code}).",
   "errors.nothingToAdd": "Nada para adicionar: solte pastas ou arquivos .pkg.",
+  "errors.updateFailed": "Não foi possível procurar atualizações ({detail}).",
+  "errors.updateUnavailable": "Esta versão não se atualiza sozinha.",
+  "errors.updateNotReady": "A atualização ainda não foi baixada.",
+  "errors.updateWaitForJobs": "Há um envio em andamento: atualize quando ele terminar.",
 
   "drop.title": "Solte para adicionar à biblioteca",
-  "drop.hint": "Pastas entram na lista de pastas; arquivos .pkg são adicionados um a um."
+  "drop.hint": "Pastas entram na lista de pastas; arquivos .pkg são adicionados um a um.",
+
+  "update.restart": "Reiniciar e atualizar para a {version}",
+  "update.download": "PKGo {version} disponível · Baixar",
+  "update.downloading": "Baixando a versão {version}… {percent}%",
+  "update.off": "Atualizações automáticas só funcionam na versão instalada.",
+  "update.checking": "Procurando atualizações…",
+  "update.readyInfo": "A versão {version} foi baixada e será instalada ao reiniciar o PKGo.",
+  "update.availableInfo": "A versão {version} está disponível para baixar.",
+  "update.upToDate": "Você está com a versão mais recente."
 }

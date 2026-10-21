@@ -170,6 +170,8 @@
   "settings.copyDiagnostics": "Copiar diagnóstico",
   "settings.diagnosticsHint": "Versiones, conexiones y eventos recientes, para adjuntar al informar de un problema.",
   "settings.diagnosticsCopied": "Diagnóstico copiado.",
+  "settings.autoUpdate": "Buscar actualizaciones automáticamente",
+  "settings.checkUpdates": "Buscar ahora",
 
   "errors.unexpected": "Algo salió mal ({detail}).",
   "errors.startFailed": "PKGo no pudo iniciarse: {detail}",
@@ -206,7 +208,20 @@
   "errors.ps4Cancelled": "La descarga se canceló en la PS4.",
   "errors.installFailed": "La PS4 descargó el paquete, pero no pudo instalarlo (código {code}).",
   "errors.nothingToAdd": "Nada que añadir: suelta carpetas o archivos .pkg.",
+  "errors.updateFailed": "No se pudo buscar actualizaciones ({detail}).",
+  "errors.updateUnavailable": "Esta versión no se actualiza sola.",
+  "errors.updateNotReady": "La actualización aún no se ha descargado.",
+  "errors.updateWaitForJobs": "Hay un envío en curso: actualiza cuando termine.",
 
   "drop.title": "Suelta para añadir a la biblioteca",
-  "drop.hint": "Las carpetas entran en la lista de carpetas; los archivos .pkg se añaden uno a uno."
+  "drop.hint": "Las carpetas entran en la lista de carpetas; los archivos .pkg se añaden uno a uno.",
+
+  "update.restart": "Reiniciar y actualizar a la {version}",
+  "update.download": "PKGo {version} disponible · Descargar",
+  "update.downloading": "Descargando la versión {version}… {percent}%",
+  "update.off": "Las actualizaciones automáticas solo funcionan en la versión instalada.",
+  "update.checking": "Buscando actualizaciones…",
+  "update.readyInfo": "La versión {version} se descargó y se instalará al reiniciar PKGo.",
+  "update.availableInfo": "La versión {version} está disponible para descargar.",
+  "update.upToDate": "Tienes la versión más reciente."
 }

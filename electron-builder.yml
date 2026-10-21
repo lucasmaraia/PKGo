@@ -40,4 +40,9 @@ linux:
     - target: deb
       arch: [x64]
   artifactName: ${name}-${version}-${arch}.${ext}
-publish: null
+# Where installed copies look for updates (electron-updater). The release
+# workflow builds with --publish never and attaches the files to the release.
+publish:
+  provider: github
+  owner: lucasmaraia
+  repo: PKGo

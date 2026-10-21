@@ -1300,3 +1300,26 @@ body:not(.selecting) .pick,
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* ---------- app updates ---------- */
+.update-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: default;
+}
+.update-pill.ready {
+  color: var(--text);
+  background: #0a63d6;
+  border-color: #4f9bff;
+  cursor: pointer;
+}
+.update-pill.ready:hover,
+.update-pill.ready:focus-visible,
+.pad .update-pill.ready:focus {
+  background: #1a75ec;
+  box-shadow: var(--glow);
+}

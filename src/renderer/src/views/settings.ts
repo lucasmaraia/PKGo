@@ -1,7 +1,7 @@
 // Settings panel: console address (with network discovery), library folders,
 // language and about.
 import {LANGUAGE_NAMES} from '@shared/i18n';
-import {LANGUAGES, type DiscoveredConsole, type Language} from '@shared/types';
+import {LANGUAGES, type AppState, type DiscoveredConsole, type Language} from '@shared/types';
 import {$} from '../dom';
 import {esc} from '../format';
 import {errorText, t} from '../i18n';
@@ -77,7 +77,33 @@ export function renderSettings(): void {
     'GitHub',
     '<a href="https://github.com/lucasmaraia/PKGo" target="_blank" rel="noreferrer">GitHub</a>',
   );
+  renderUpdates(state);
   renderDiscovered();
+}
+
+function renderUpdates(state: AppState): void {
+  const {update} = state;
+  const auto = $<HTMLInputElement>('#autoUpdate');
+  auto.checked = state.config.autoUpdate;
+  auto.disabled = update.state === 'off';
+  $<HTMLButtonElement>('#checkUpdates').disabled = update.state === 'off' || update.state === 'checking';
+  const version = update.version ?? '';
+  $('#updateInfo').textContent =
+    update.state === 'off'
+      ? t('update.off')
+      : update.state === 'checking'
+        ? t('update.checking')
+        : update.state === 'downloading'
+          ? t('update.downloading', {version, percent: update.percent ?? 0})
+          : update.state === 'ready'
+            ? t('update.readyInfo', {version})
+            : update.state === 'available'
+              ? t('update.availableInfo', {version})
+              : update.state === 'error' && update.error
+                ? errorText(update.error)
+                : update.checkedAt
+                  ? t('update.upToDate')
+                  : '';
 }
 
 function renderDiscovered(): void {

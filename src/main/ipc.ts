@@ -6,11 +6,12 @@ import type {AppCore} from '@core/AppCore';
 import {toErrorInfo} from '@core/errors';
 import type {ConfigPatch, IpcResult, UninstallTarget} from '@shared/types';
 import {pickFiles, pickFolders} from './dialogs';
+import type {Updater} from './updater';
 
 /** Longest wait between two state updates sent to the window. */
 const STATE_THROTTLE = 200;
 
-export function registerIpc(core: AppCore, getWindow: () => BrowserWindow | null): void {
+export function registerIpc(core: AppCore, updater: Updater, getWindow: () => BrowserWindow | null): void {
   const handle = <A extends unknown[], R>(channel: string, fn: (...args: A) => R | Promise<R>) => {
     ipcMain.handle(channel, async (_event, ...args: unknown[]): Promise<IpcResult<Awaited<R>>> => {
       try {
@@ -24,7 +25,13 @@ export function registerIpc(core: AppCore, getWindow: () => BrowserWindow | null
   const language = () => core.language;
 
   handle('getState', () => core.getState());
-  handle('setConfig', (patch: ConfigPatch) => core.setConfig(patch));
+  handle('setConfig', (patch: ConfigPatch) => {
+    core.setConfig(patch);
+    // Turned on: look right away instead of waiting for the next round.
+    if (patch.autoUpdate) void updater.check().catch(() => {});
+  });
+  handle('checkUpdates', () => updater.check());
+  handle('installUpdate', () => updater.install());
   handle('addFolders', async () => core.addFolders(await pickFolders(win(), language())));
   handle('removeFolder', (folder: string) => core.removeFolder(folder));
   handle('setFolderRecursive', (folder: string, recursive: boolean) => core.setFolderRecursive(folder, recursive));

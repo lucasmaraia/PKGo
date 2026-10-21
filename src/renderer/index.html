@@ -33,6 +33,7 @@
         <span>PKGo</span>
       </div>
       <div class="topbar-right">
+        <button class="update-pill" id="updatePill" type="button" data-action="installUpdate" hidden></button>
         <button class="status" id="ps4Status" type="button" data-action="openSettings" data-i18n-title="status.title">
           <span class="dot"></span><span class="label"></span>
         </button>
@@ -215,6 +216,17 @@
         <section class="settings-section about">
           <h3 data-i18n="settings.about"></h3>
           <p class="note" id="aboutText"></p>
+          <div class="field-row">
+            <label class="toggle"
+              ><input type="checkbox" id="autoUpdate" data-action="autoUpdate" /><span
+                data-i18n="settings.autoUpdate"
+              ></span
+            ></label>
+            <button class="btn small" type="button" data-action="checkUpdates" id="checkUpdates">
+              <span data-i18n="settings.checkUpdates"></span>
+            </button>
+          </div>
+          <p class="note" id="updateInfo"></p>
           <div class="field-row">
             <button
               class="btn"

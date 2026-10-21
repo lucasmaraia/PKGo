@@ -18,6 +18,7 @@ Nenhum app instalador precisa estar aberto no console.
 - **Excluir do PS4**: remova um jogo, ou só a atualização, pelo desinstalador do sistema. Os dados salvos ficam.
 - **Encontra o seu PS4** na rede sozinho, ou você digita o IP.
 - **Teclado e controle**: as setas ou o direcional navegam como no PS4; ✕ escolhe, ○ volta, L1/R1 trocam de aba.
+- **Atualiza sozinho**: o instalador e o AppImage/.deb do Linux baixam versões novas em segundo plano e instalam ao reiniciar (nunca durante um envio ao PS4). A versão portátil avisa quando sai uma versão nova.
 - **Diagnóstico**: um clique copia versões, conexões e eventos recentes, para anexar ao relatar um problema.
 - **Português (Brasil), English e Español**, seguindo o idioma do sistema por padrão.
 
