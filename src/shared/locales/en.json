@@ -232,6 +232,8 @@
   "update.readyInfo": "Version {version} was downloaded and will be installed when PKGo restarts.",
   "update.availableInfo": "Version {version} is available to download.",
   "update.upToDate": "You have the latest version.",
+  "update.restartAdmin": "Update to {version} (asks for administrator rights)",
+  "update.readyAdminInfo": "Version {version} was downloaded. PKGo is installed for all users, so Windows asks for administrator rights to update: use the button at the top. To avoid that, reinstall choosing to install only for your user.",
 
   "deleteFiles.title": "Delete from PC",
   "deleteFiles.summary": "{what} go to the trash, freeing {size}.",

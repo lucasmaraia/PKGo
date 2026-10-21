@@ -209,6 +209,8 @@ export interface UpdateStatus {
   version?: string;
   percent?: number;
   manual?: boolean;
+  /** Installing asks for administrator rights (installed for all users). */
+  admin?: boolean;
   checkedAt?: number;
   error?: ErrorInfo;
 }

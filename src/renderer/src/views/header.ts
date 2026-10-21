@@ -15,7 +15,7 @@ export function renderStatus(): void {
   const version = update.version ?? '';
   const text =
     update.state === 'ready'
-      ? t('update.restart', {version})
+      ? t(update.admin ? 'update.restartAdmin' : 'update.restart', {version})
       : update.state === 'available' && update.manual
         ? t('update.download', {version})
         : update.state === 'downloading'

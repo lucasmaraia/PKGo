@@ -1,7 +1,7 @@
 {
   "name": "pkgo",
   "productName": "PKGo",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "PKGo for PS4: install and manage PS4 packages over the network with GoldHEN, no installer app needed.",
   "license": "GPL-3.0-only",
   "author": "lucasmaraia",

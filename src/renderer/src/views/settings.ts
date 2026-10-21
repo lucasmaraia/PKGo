@@ -96,7 +96,7 @@ function renderUpdates(state: AppState): void {
         : update.state === 'downloading'
           ? t('update.downloading', {version, percent: update.percent ?? 0})
           : update.state === 'ready'
-            ? t('update.readyInfo', {version})
+            ? t(update.admin ? 'update.readyAdminInfo' : 'update.readyInfo', {version})
             : update.state === 'available'
               ? t('update.availableInfo', {version})
               : update.state === 'error' && update.error

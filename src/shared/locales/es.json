@@ -232,6 +232,8 @@
   "update.readyInfo": "La versión {version} se descargó y se instalará al reiniciar PKGo.",
   "update.availableInfo": "La versión {version} está disponible para descargar.",
   "update.upToDate": "Tienes la versión más reciente.",
+  "update.restartAdmin": "Actualizar a la {version} (pide permiso de administrador)",
+  "update.readyAdminInfo": "La versión {version} se descargó. Como PKGo está instalado para todos los usuarios, Windows pide permiso de administrador al actualizar: usa el botón de arriba. Para evitarlo, reinstala eligiendo instalar solo para tu usuario.",
 
   "deleteFiles.title": "Eliminar del PC",
   "deleteFiles.summary": "{what} van a la Papelera, liberando {size}.",

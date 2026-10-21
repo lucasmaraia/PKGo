@@ -171,7 +171,7 @@ if (!app.requestSingleInstanceLock()) {
       app.quit();
     });
     window = createWindow();
-    updater.start();
+    updater.start(window);
   });
 
   app.on('window-all-closed', () => app.quit());
