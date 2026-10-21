@@ -29,6 +29,8 @@ export interface InstallContext {
   onChange: () => void;
   /** A job is about to be sent to the console. */
   onStart?: (job: Job) => void;
+  /** Awaited before each try is sent (e.g. to learn what the console already has). */
+  prepare?: (job: Job) => Promise<void>;
   /** Called once the console has downloaded the whole package (it still has to install it). */
   onDownloaded: (entry: LibraryEntry) => void;
   log?: (message: string) => void;
@@ -241,6 +243,9 @@ export class InstallQueue {
     Object.assign(job, {state: 'starting', startedAt: Date.now(), retryAt: undefined, cleanup: undefined});
     this.ctx.onStart?.(job);
     this.ctx.onChange();
+    await this.ctx.prepare?.(job);
+    // Cancelled meanwhile: nothing was sent to the PS4 yet.
+    if (job.state !== 'starting') return;
 
     const {served} = this.ctx.files;
     served.reset(entry.id);

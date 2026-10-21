@@ -89,11 +89,11 @@ export class AppCore extends EventEmitter<{change: []}> {
       },
       removeTask: (task, entry, job) => this.removeTask(task, entry, job),
       onChange: changed,
-      onStart: job => {
-        // The log tells how the download goes: get it back if another program took it.
-        this.klog.wake();
+      // The log tells how the download goes: get it back if another program took it.
+      onStart: () => this.klog.wake(),
+      prepare: async job => {
         // Judged on the first try: a failed one may leave the game half there.
-        if (!this.newGames.has(job.id)) this.newGames.set(job.id, this.isNewGame(job));
+        if (!this.newGames.has(job.id)) this.newGames.set(job.id, await this.isNewGame(job));
       },
       onDownloaded: entry => void this.watchInstall(entry),
       log: message => this.log.add(message),
@@ -122,13 +122,23 @@ export class AppCore extends EventEmitter<{change: []}> {
    * Whether a job sends a game (or app) the PS4 does not have. Its download
    * puts the game on the home screen right away, to be played while it
    * downloads; stopping it leaves that half-installed game behind.
-   * false when unsure (console list not loaded): never delete on a guess.
+   * Waits for the console list when it is still loading (the app just
+   * opened); false when it cannot be read: never delete on a guess.
    */
-  private isNewGame(job: Job): boolean {
+  private async isNewGame(job: Job): Promise<boolean> {
     const info = this.library.get(job.pkgId)?.info;
     if (!info?.titleId || (info.kind !== 'game' && info.kind !== 'app')) return false;
-    if (this.console.state(this.language).state !== 'ready') return false;
-    return !this.console.find(info.titleId);
+    if (this.console.state(this.language).state !== 'ready') {
+      await this.console.settled();
+      if (this.console.state(this.language).state !== 'ready') await this.console.refresh();
+      if (this.console.state(this.language).state !== 'ready') {
+        this.log.add(`job ${job.id}: console list unreadable, a half-installed game would be kept`);
+        return false;
+      }
+    }
+    const isNew = !this.console.find(info.titleId);
+    this.log.add(`job ${job.id}: ${info.titleId} ${isNew ? 'is new on the PS4' : 'is already on the PS4'}`);
+    return isNew;
   }
 
   /**
