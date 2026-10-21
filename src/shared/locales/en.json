@@ -28,6 +28,8 @@
   "nav.ps4": "On PS4",
   "nav.show": "Show",
   "nav.settings": "Settings",
+  "nav.gamepadConnected": "Controller connected: use the D-pad to move, ✕ to choose, ○ to go back and L1/R1 to switch tabs.",
+  "nav.gamepadDisconnected": "Controller disconnected.",
 
   "filter.all": "All",
   "filter.game": "Games",
@@ -59,6 +61,9 @@
   "library.scanning": "Searching folders… {folders} folder(s), {found} PKG(s)",
   "library.foldersAdded": "{count} folder(s) added to the library.",
   "library.filesAdded": "{count} PKG(s) added.",
+  "library.installUpdates": "Install updates ({count})",
+  "library.updatesQueued": "{count} update(s) and DLC(s) queued.",
+  "library.alreadyAdded": "These were already in the library.",
 
   "console.refresh": "Refresh list",
   "console.updating": "refreshing…",
@@ -88,7 +93,10 @@
   "jobs.ps4NotReady": "The PS4 is not answering right now. The package was queued anyway.",
   "jobs.cancel": "Cancel sending",
   "jobs.cancelled": "Sending cancelled",
-  "jobs.cancelledToast": "Sending {title} was cancelled. The PS4 shows the download as failed: delete it from its notifications.",
+  "jobs.cancelledToast": "Sending {title} was cancelled.",
+  "jobs.retrying": "Trying again shortly ({attempt} of {max}). Reason: {reason}",
+  "jobs.attempt": "try {attempt} of {max}",
+  "jobs.leftOnPs4": "could not take the download off the PS4 list: delete it from its notifications",
 
   "details.installed": "Installed on the PS4 (v{version})",
   "details.notInstalled": "Not installed",
@@ -149,6 +157,13 @@
   "settings.inUse": "In use",
   "settings.noneFound": "No PS4 found. Check that it is on and on the same network, or type its IP above.",
   "settings.saved": "Settings saved.",
+  "settings.klog.connecting": "Connecting to the PS4 log…",
+  "settings.klog.live": "Following the PS4 in real time (failures, cancels and deletions show up right away).",
+  "settings.klog.busy": "Another program is reading the PS4 log, which serves one reader at a time. PKG Sender takes it back when a download starts; until then, changes made on the PS4 show up late.",
+  "settings.klog.unavailable": "The PS4 log (port 3232) does not answer: check that GoldHEN's Klog server is on. Without it, failures and deletions show up late.",
+  "settings.copyDiagnostics": "Copy diagnostics",
+  "settings.diagnosticsHint": "Versions, connections and recent events, to attach when reporting a problem.",
+  "settings.diagnosticsCopied": "Diagnostics copied.",
 
   "errors.unexpected": "Something went wrong ({detail}).",
   "errors.startFailed": "PKG Sender could not start: {detail}",
@@ -183,5 +198,9 @@
   "errors.jobNotActive": "This sending has already finished.",
   "errors.ps4DownloadFailed": "The PS4 could not download the package (code {code}). Check the notification on the PS4.",
   "errors.ps4Cancelled": "The download was cancelled on the PS4.",
-  "errors.installFailed": "The PS4 downloaded the package but could not install it (code {code})."
+  "errors.installFailed": "The PS4 downloaded the package but could not install it (code {code}).",
+  "errors.nothingToAdd": "Nothing to add: drop folders or .pkg files.",
+
+  "drop.title": "Drop to add to the library",
+  "drop.hint": "Folders join the folder list; .pkg files are added one by one."
 }

@@ -67,6 +67,12 @@ export function renderSettings(): void {
     ? t('library.scanning', {folders: state.scan.folders, found: state.scan.found})
     : t('settings.libraryCount', {count: state.library.length});
   $('#lanInfo').textContent = t('settings.lanInfo', {ip: state.lanIp || '—'});
+  const klog = $('#klogInfo');
+  klog.hidden = state.ps4 !== 'ready' || state.klog === 'off';
+  if (!klog.hidden) {
+    klog.className = `note ${state.klog === 'live' || state.klog === 'connecting' ? '' : 'warn'}`;
+    klog.textContent = t(`settings.klog.${state.klog}`);
+  }
   $('#aboutText').innerHTML = esc(t('settings.aboutText', {version: window.api.version})).replace(
     'GitHub',
     '<a href="https://github.com/lucasmaraia/pkg-sender" target="_blank" rel="noreferrer">GitHub</a>',

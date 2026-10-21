@@ -1,6 +1,7 @@
 // IPC handlers: one channel per Api method (see src/shared/types.ts). Replies
 // carry errors as data (IpcResult), since Electron drops custom error fields.
-import {ipcMain, type BrowserWindow} from 'electron';
+import os from 'node:os';
+import {app, clipboard, ipcMain, type BrowserWindow} from 'electron';
 import type {AppCore} from '@core/AppCore';
 import {toErrorInfo} from '@core/errors';
 import type {ConfigPatch, IpcResult, UninstallTarget} from '@shared/types';
@@ -28,14 +29,27 @@ export function registerIpc(core: AppCore, getWindow: () => BrowserWindow | null
   handle('removeFolder', (folder: string) => core.removeFolder(folder));
   handle('setFolderRecursive', (folder: string, recursive: boolean) => core.setFolderRecursive(folder, recursive));
   handle('addFiles', async () => core.addFiles(await pickFiles(win(), language())));
+  handle('addPaths', (paths: string[]) => core.addPaths(paths.filter(p => typeof p === 'string' && p)));
   handle('rescan', () => core.rescan());
   handle('removeFromLibrary', (id: string) => core.removeFromLibrary(id));
   handle('install', (id: string) => core.install(id));
+  handle('installUpdates', () => core.installUpdates());
   handle('cancelJob', (jobId: number) => core.cancelJob(jobId));
   handle('clearFinished', () => core.clearFinished());
   handle('refreshConsole', () => core.refreshConsole());
   handle('uninstall', (titleId: string, what: UninstallTarget) => core.uninstall(titleId, what));
   handle('discover', () => core.discover());
+  handle('copyDiagnostics', () =>
+    clipboard.writeText(
+      core.diagnostics({
+        app: app.getVersion(),
+        electron: process.versions.electron,
+        chrome: process.versions.chrome,
+        system: `${os.type()} ${os.release()} ${os.arch()}`,
+        packaged: String(app.isPackaged),
+      }),
+    ),
+  );
 
   // Push state changes, at most every STATE_THROTTLE ms.
   let timer: NodeJS.Timeout | null = null;

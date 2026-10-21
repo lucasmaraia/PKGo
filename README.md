@@ -7,18 +7,23 @@ No installer app has to be open on the console.
 
 ## Features
 
-- **Library on your PC**: add any number of folders (subfolders included) and see each PKG with its cover, title, version and type (game, update, DLC or app/homebrew).
+- **Library on your PC**: add any number of folders (subfolders included), or drag folders and PKGs onto the window, and see each PKG with its cover, title, version and type (game, update, DLC or app/homebrew).
 - **One-click install**: PKG Sender serves the file over your network and the PS4 downloads it in the background, with progress, speed and time left. Packages queue up and install one after another.
+- **Install all updates**: one button queues every update newer than the one on the PS4, and the DLCs it does not have yet.
+- **Follows the PS4 in real time**: failures, downloads cancelled or games deleted on the console show up right away. Failed downloads are retried, and cancelled or failed ones are removed from the PS4 download list, so no failed entry stays in its notifications.
 - **Console view**: lists the games and apps installed on the PS4, with version, update, DLC count and space used.
 - **Delete from the PS4**: remove a game, or only its update, using the system uninstaller. Saved data is kept.
 - **Finds your PS4** on the network automatically, or you can type its IP.
+- **Keyboard and controller**: arrows or the D-pad move around like on the PS4; ✕ chooses, ○ goes back, L1/R1 switch tabs.
+- **Diagnostics**: one click copies versions, connections and recent events, to attach to a bug report.
 - **English, Español and Português (Brasil)**, following your system language by default.
 
 ## Requirements
 
 - A PS4 with **GoldHEN** loaded, with these enabled in _Settings > GoldHEN > Server Settings_:
   - **FTP server** (port 2121), used to read what is installed;
-  - **BinLoader server** (port 9090), used to install and delete.
+  - **BinLoader server** (port 9090), used to install and delete;
+  - optionally the **Klog server** (port 3232), used to follow downloads in real time. The PS4 serves its log to one program at a time.
 - The PC and the PS4 on the same local network.
 
 ## Install
@@ -37,7 +42,8 @@ On first launch, PKG Sender looks for your PS4. If your firewall asks, allow it 
 ## How it works
 
 - **Install**: PKG Sender sends a small payload to GoldHEN's BinLoader. It registers the download with the PS4's own download service, pointing at PKG Sender's file server. The console then downloads the PKG straight from your PC.
-- **Delete**: another payload calls the system uninstaller and reports the result back.
+- **Delete, and clean up downloads**: another payload calls the system uninstaller, or removes a stopped download from the PS4 download list, and reports the result back.
+- **Real time**: PKG Sender reads GoldHEN's kernel log to see what the PS4 does with each download.
 - **Console list**: read over GoldHEN's FTP server.
 
 The payloads live in [`payloads/`](payloads/README.md), with their sources and build script.
@@ -50,6 +56,7 @@ Requires Node.js 22.12 or newer.
 npm install
 npm run dev          # run with hot reload
 npm test             # unit tests (vitest)
+npm run test:e2e     # interface tests on the built app (Playwright, no PS4 needed)
 npm run lint         # ESLint
 npm run typecheck    # TypeScript
 npm run dist:win     # Windows installer + portable (dist/)
@@ -68,6 +75,7 @@ src/shared     Types and translations shared by all of the above
 payloads       Sources and build script of the PS4 payloads
 resources      Built payloads and the app icon
 tests          Unit tests
+e2e            End-to-end tests of the interface
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to help, including how to add a language.

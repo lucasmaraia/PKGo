@@ -1,6 +1,6 @@
 // Exposes the typed API (src/shared/types.ts) as window.api. The renderer has
 // no Node access: everything goes through these IPC calls.
-import {contextBridge, ipcRenderer, type IpcRendererEvent} from 'electron';
+import {contextBridge, ipcRenderer, webUtils, type IpcRendererEvent} from 'electron';
 import type {Api, AppState, IpcResult} from '@shared/types';
 
 // Failed calls reject with the ErrorInfo object ({code, params}) so the
@@ -26,14 +26,18 @@ const api: Api = {
   removeFolder: folder => call('removeFolder', folder),
   setFolderRecursive: (folder, recursive) => call('setFolderRecursive', folder, recursive),
   addFiles: () => call('addFiles'),
+  addPaths: paths => call('addPaths', paths),
+  pathForFile: file => webUtils.getPathForFile(file),
   rescan: () => call('rescan'),
   removeFromLibrary: id => call('removeFromLibrary', id),
   install: id => call('install', id),
+  installUpdates: () => call('installUpdates'),
   cancelJob: jobId => call('cancelJob', jobId),
   clearFinished: () => call('clearFinished'),
   refreshConsole: () => call('refreshConsole'),
   uninstall: (titleId, what) => call('uninstall', titleId, what),
   discover: () => call('discover'),
+  copyDiagnostics: () => call('copyDiagnostics'),
 };
 
 contextBridge.exposeInMainWorld('api', api);

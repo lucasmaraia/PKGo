@@ -36,7 +36,7 @@ export function openUninstall(titleId: string): void {
 
 export function updateUninstall(): void {
   const state = store.state;
-  const unavailable = state?.ps4 !== 'ready' || !state.payloads.uninstall;
+  const unavailable = state?.ps4 !== 'ready' || !state.payloads.tools;
   $('#uninstallOffline').hidden = !unavailable;
   const btn = $<HTMLButtonElement>('#confirmUninstall');
   btn.disabled = unavailable || busy;

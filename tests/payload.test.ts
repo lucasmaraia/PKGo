@@ -3,7 +3,14 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import {describe, expect, it} from 'vitest';
-import {InstallPayload, packageMessage, patchPayload, uninstallWithPayload} from '@core/payload/PayloadClient';
+import {
+  InstallPayload,
+  packageMessage,
+  patchPayload,
+  removeTaskMessage,
+  removeTaskWithPayload,
+  uninstallWithPayload,
+} from '@core/payload/PayloadClient';
 
 function fakePayloadFile(name: string): string {
   const file = path.join(os.tmpdir(), `${name}-${process.pid}.bin`);
@@ -167,5 +174,47 @@ describe('uninstallWithPayload', () => {
     await expect(
       uninstallWithPayload({payloadPath: 'x', ps4Ip: '1.2.3.4', pcIp: '1.2.3.5', titleId: '../etc', what: 'game'}),
     ).rejects.toMatchObject({code: 'titleIdInvalid'});
+  });
+});
+
+describe('removeTaskWithPayload', () => {
+  it('builds the request by task ID, or by content ID when it is unknown', () => {
+    const byTask = removeTaskMessage('0000006a', 'UP0000-CUSA00001_00-GAME000000000000');
+    expect(byTask.length).toBe(4 + 4 + 48);
+    expect(byTask.readUInt32LE(0)).toBe(3);
+    expect(byTask.readInt32LE(4)).toBe(0x6a);
+    expect(byTask.toString('ascii', 8, 44)).toBe('UP0000-CUSA00001_00-GAME000000000000');
+    expect(byTask[44]).toBe(0);
+    expect(removeTaskMessage(null, '').readInt32LE(4)).toBe(-1);
+    expect(removeTaskMessage('10000009', '').readInt32LE(4)).toBe(0x10000009);
+  });
+
+  it('sends the request and returns the results', async () => {
+    const file = fakePayloadFile('tools');
+    let request: Buffer | undefined;
+    const loaderPort = await fakeLoader(port => {
+      const back = net.connect(port, '127.0.0.1');
+      back.once('data', (d: Buffer) => {
+        request = d;
+        const reply = Buffer.alloc(8);
+        reply.writeInt32LE(0x80990004 | 0, 0);
+        reply.writeInt32LE(0, 4);
+        back.end(reply);
+      });
+    });
+    try {
+      const r = await removeTaskWithPayload({
+        payloadPath: file,
+        ps4Ip: '127.0.0.1',
+        pcIp: '127.0.0.1',
+        task: '0000006a',
+        contentId: 'UP0000-CUSA00001_00-GAME000000000000',
+        loaderPorts: [loaderPort],
+      });
+      expect(request?.equals(removeTaskMessage('0000006a', 'UP0000-CUSA00001_00-GAME000000000000'))).toBe(true);
+      expect(r).toEqual({stop: 0x80990004 | 0, unregister: 0});
+    } finally {
+      fs.rmSync(file, {force: true});
+    }
   });
 });

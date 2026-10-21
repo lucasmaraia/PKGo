@@ -19,6 +19,9 @@ export function renderView(): void {
   $('#grid').hidden = view !== 'pc';
   $('#viewTitle').textContent = t(view === 'pc' ? 'nav.pc' : 'nav.ps4');
   $('#countPc').textContent = state.library.length ? String(state.library.length) : '';
+  const updates = $<HTMLButtonElement>('#installUpdates');
+  updates.hidden = !state.updates.length;
+  $('#installUpdatesLabel').textContent = t('library.installUpdates', {count: state.updates.length});
   const c = state.console;
   $('#countPs4').textContent = c.state === 'ready' ? String(c.items.length) : '';
   const list = view === 'pc' ? state.library : c.items;

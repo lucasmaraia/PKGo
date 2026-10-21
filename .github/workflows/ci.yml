@@ -21,4 +21,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
+      - name: End-to-end tests
+        if: runner.os != 'Linux'
+        run: npm run test:e2e
+      - name: End-to-end tests (virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e

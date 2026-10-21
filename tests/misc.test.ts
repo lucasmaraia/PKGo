@@ -1,10 +1,12 @@
 import {describe, expect, it} from 'vitest';
 import {dlcLabel} from '@core/AppCore';
 import {normalize} from '@core/config/ConfigStore';
+import {redactHome} from '@core/diagnostics/ActivityLog';
 import {parseDdpReply} from '@core/network/discovery';
 import {broadcastAddress, subnetHosts} from '@core/network/lan';
 import {ServedRanges} from '@core/server/ServedRanges';
 import {matchLanguage, MESSAGES, translate, translateError} from '@shared/i18n';
+import {nearest, type Box} from '@shared/spatial';
 
 describe('ServedRanges', () => {
   it('counts each byte once, whatever the order and overlap of ranges', () => {
@@ -104,5 +106,32 @@ describe('dlcLabel', () => {
     expect(dlcLabel('UP4064-CUSA20499_00-CUPHEADDLC000000')).toBe('CUPHEADDLC000000');
     expect(dlcLabel('UP0000-CUSA00001_00-SHORT')).toBeNull();
     expect(dlcLabel(null)).toBeNull();
+  });
+});
+
+describe('redactHome', () => {
+  it('hides the home folder in both slash styles', () => {
+    expect(redactHome('C:\\Users\\ana\\Games and C:/Users/ana/x', 'C:\\Users\\ana')).toBe('~\\Games and ~/x');
+  });
+});
+
+describe('nearest (focus navigation)', () => {
+  const rect = (left: number, top: number, width = 100, height = 100) =>
+    ({left, top, width, height, right: left + width, bottom: top + height}) satisfies Box;
+  // A 3x2 grid of tiles plus a sidebar button on the left.
+  const tiles = [rect(200, 0), rect(320, 0), rect(440, 0), rect(200, 120), rect(320, 120), rect(440, 120)];
+  const side = rect(0, 130, 150, 40);
+  const all = [...tiles, side];
+
+  it('moves along rows and columns of the grid', () => {
+    expect(nearest(tiles[0]!, all, 'right')).toBe(1);
+    expect(nearest(tiles[1]!, all, 'down')).toBe(4);
+    expect(nearest(tiles[5]!, all, 'up')).toBe(2);
+    expect(nearest(tiles[2]!, all, 'right')).toBe(-1);
+  });
+
+  it('leaves the grid for the sidebar and comes back to the row in line', () => {
+    expect(nearest(tiles[3]!, all, 'left')).toBe(6);
+    expect(nearest(side, all, 'right')).toBe(3);
   });
 });

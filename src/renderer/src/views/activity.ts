@@ -1,5 +1,5 @@
 // Install activity above the grid: the current download and the queue/history.
-import {ACTIVE_JOB_STATES} from '@shared/types';
+import {ACTIVE_JOB_STATES, MAX_ATTEMPTS} from '@shared/types';
 import {$} from '../dom';
 import {bytes, duration, esc} from '../format';
 import {errorText, t} from '../i18n';
@@ -24,7 +24,7 @@ export function renderActivity(): void {
   }
   const current = jobs.find(j => j.state === 'starting' || j.state === 'installing');
   const others = jobs.filter(j => j !== current).reverse();
-  const key = JSON.stringify([current?.id, current?.state, others.map(j => [j.id, j.state])]);
+  const key = JSON.stringify([current?.id, current?.state, others.map(j => [j.id, j.state, j.attempt, j.cleanup])]);
   if (key !== activityKey) {
     activityKey = key;
     const item = current && itemById(current.pkgId);
@@ -38,7 +38,7 @@ export function renderActivity(): void {
         <div class="hero-body">
           ${cover(item || {title: current.title, hasIcon: false, iconId: null, id: ''})}
           <div class="hero-info">
-            <h2>${esc(current.title)}</h2>
+            <h2>${esc(current.title)}${current.attempt > 1 ? ` <small class="attempt">${esc(t('jobs.attempt', {attempt: current.attempt, max: MAX_ATTEMPTS}))}</small>` : ''}</h2>
             <div class="hero-state" id="heroState"></div>
             <div class="progress" id="heroBar"><span></span></div>
             <div class="hero-stats" id="heroStats"></div>
@@ -54,16 +54,22 @@ export function renderActivity(): void {
       `<div class="queue">${others
         .map(j => {
           const it = itemById(j.pkgId);
-          const sub =
+          const sub = [
             j.state === 'queued'
-              ? t('jobs.waiting')
+              ? j.retryAt
+                ? t('jobs.retrying', {attempt: j.attempt, max: MAX_ATTEMPTS, reason: j.error ? errorText(j.error) : ''})
+                : t('jobs.waiting')
               : j.state === 'done'
                 ? t('jobs.done')
                 : j.state === 'cancelled'
                   ? t('jobs.cancelled')
                   : j.error
                     ? errorText(j.error)
-                    : '';
+                    : '',
+            (j.state === 'cancelled' || j.state === 'error') && j.cleanup === 'failed' ? t('jobs.leftOnPs4') : '',
+          ]
+            .filter(Boolean)
+            .join(' · ');
           return `<div class="queue-row ${j.state}">${cover(it || {title: j.title, hasIcon: false, iconId: null, id: ''})}
           <div class="q-title">${esc(j.title)}<span class="q-sub">${esc(sub)}</span></div>
           ${j.state === 'queued' ? `<button class="btn small" data-action="cancelJob" data-job="${j.id}">${esc(t('jobs.remove'))}</button>` : ''}

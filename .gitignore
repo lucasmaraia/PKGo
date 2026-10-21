@@ -4,3 +4,5 @@ dist/
 config.json
 *.log
 *.tsbuildinfo
+test-results/
+playwright-report/

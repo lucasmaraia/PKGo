@@ -5,13 +5,13 @@ PKG Sender talks to the PS4 through two payloads, sent to GoldHEN's BinLoader se
 | File            | Source                                                                                                                                         | What it does                                                                                                                                                                                                                          |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `install.bin`   | [DirectPackageInstaller](https://github.com/marcussacana/DirectPackageInstaller) by marcussacana, commit `ca7bade6` (GPL-3.0)                  | Connects back to PKG Sender, receives the package URL, name, content ID, type and size, and registers the download with the system download service (BGFT). It stays running and accepts the next package.                         |
-| `uninstall.bin` | `uninstall.c` + `uninstall_net.c` (this folder), on the same payload template                                                                 | Connects back, receives what to remove (game or update) and the title ID, calls the system uninstaller (`sceAppInstUtilAppUnInstall` / `sceAppInstUtilAppUnInstallPat`, names as used by [Itemzflow](https://github.com/LightningMods/Itemzflow)) and sends the result codes back. Saved data is not touched. |
+| `tools.bin`     | `tools.c` + `tools_net.c` (this folder), on the same payload template                                                                         | Connects back and runs one command, then sends the result codes back. **Uninstall** a game or only its update with the system uninstaller (`sceAppInstUtilAppUnInstall` / `sceAppInstUtilAppUnInstallPat`, names as used by [Itemzflow](https://github.com/LightningMods/Itemzflow)); saved data is not touched. **Remove a download** from the download list (`sceBgftServiceIntDownloadStopTask` + `sceBgftServiceIntDownloadUnregisterTask`), by task ID or looked up by content ID, so cancelled and failed downloads leave no entry in the notifications. |
 
 Both get the PC address patched in at send time, over six `0xB4` marker bytes (IPv4 + port).
 
 ## Building
 
-`build.sh` fetches the DirectPackageInstaller sources at the pinned commit (only its `Payload` folder), builds them, then builds `uninstall.bin` against the same template. It never uses prebuilt binaries.
+`build.sh` fetches the DirectPackageInstaller sources at the pinned commit (only its `Payload` folder), builds them, then builds `tools.bin` against the same template. It never uses prebuilt binaries.
 
 On Linux or WSL:
 

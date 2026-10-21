@@ -3,31 +3,40 @@
 import {EventEmitter} from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
-import type {
-  AppState,
-  ConfigPatch,
-  DiscoveredConsole,
-  Language,
-  LibraryItem,
-  Ps4Status,
-  UninstallTarget,
+import {
+  ACTIVE_JOB_STATES,
+  type AddedPaths,
+  type AppState,
+  type ConfigPatch,
+  type DiscoveredConsole,
+  type Language,
+  type LibraryItem,
+  type Ps4Status,
+  type UninstallTarget,
 } from '@shared/types';
 import {ConfigStore} from './config/ConfigStore';
 import {ConsoleService, type RawConsoleItem} from './console/ConsoleService';
 import {probeFtp} from './console/FtpClient';
 import {KlogMonitor, type KlogEvent} from './console/KlogMonitor';
-import {AppError, hex} from './errors';
+import {ActivityLog, redactHome} from './diagnostics/ActivityLog';
+import {AppError, hex, toErrorInfo} from './errors';
 import {InstallQueue} from './install/InstallQueue';
 import {LibraryService, pkgId, type LibraryEntry} from './library/LibraryService';
 import {discoverConsoles} from './network/discovery';
 import {lanIp} from './network/lan';
-import {InstallPayload, uninstallWithPayload} from './payload/PayloadClient';
+import {
+  InstallPayload,
+  removeTaskWithPayload,
+  TASK_NOT_FOUND,
+  uninstallWithPayload,
+  type ToolsTarget,
+} from './payload/PayloadClient';
 import {titleFor} from './pkg/PkgReader';
 import {PkgFileServer} from './server/PkgFileServer';
 
 export interface AppCoreOptions {
   configFile: string;
-  /** Folder with install.bin and uninstall.bin. */
+  /** Folder with install.bin and tools.bin. */
   payloadDir: string;
   systemLanguage: Language;
 }
@@ -46,10 +55,11 @@ export class AppCore extends EventEmitter<{change: []}> {
   readonly console: ConsoleService;
   readonly server: PkgFileServer;
   readonly queue: InstallQueue;
+  readonly log = new ActivityLog();
   private readonly klog: KlogMonitor;
   private consoleRefreshTimer: NodeJS.Timeout | null = null;
   private readonly installPayload: InstallPayload;
-  private readonly uninstallPayload: string;
+  private readonly toolsPayload: string;
   private ps4: Ps4Status = 'checking';
   private statusTimer: NodeJS.Timeout | null = null;
 
@@ -64,7 +74,7 @@ export class AppCore extends EventEmitter<{change: []}> {
     );
     this.server = new PkgFileServer(id => this.library.get(id));
     this.installPayload = new InstallPayload(path.join(options.payloadDir, 'install.bin'));
-    this.uninstallPayload = path.join(options.payloadDir, 'uninstall.bin');
+    this.toolsPayload = path.join(options.payloadDir, 'tools.bin');
     this.queue = new InstallQueue({
       library: id => this.library.get(id),
       title: entry => this.title(entry),
@@ -74,11 +84,46 @@ export class AppCore extends EventEmitter<{change: []}> {
         const {ps4Ip} = this.config.get();
         return {ps4Ip, pcIp: lanIp(ps4Ip), port: this.server.port};
       },
+      removeTask: (task, entry) => this.removeTask(task, entry),
       onChange: changed,
+      // The log tells how the download goes: get it back if another program took it.
+      onStart: () => this.klog.wake(),
       onDownloaded: entry => void this.watchInstall(entry),
+      log: message => this.log.add(message),
     });
     this.klog = new KlogMonitor(() => this.config.get().ps4Ip);
-    this.klog.on('event', event => this.onKlog(event));
+    this.klog.on('event', event => {
+      this.log.add(`klog ${JSON.stringify(event)}`);
+      this.onKlog(event);
+    });
+    this.klog.on('status', status => {
+      this.log.add(`klog ${status}`);
+      changed();
+    });
+  }
+
+  /** Where the tools payload is and how it reaches back to this PC. */
+  private toolsTarget(): ToolsTarget {
+    const {ps4Ip} = this.config.get();
+    if (!ps4Ip) throw new AppError('ps4NotConfigured');
+    const pcIp = lanIp(ps4Ip);
+    if (!pcIp) throw new AppError('noLan');
+    return {payloadPath: this.toolsPayload, ps4Ip, pcIp};
+  }
+
+  /** Removes a stopped download from the PS4 list, so no failed entry stays in its notifications. */
+  private async removeTask(task: string | null, entry: LibraryEntry): Promise<boolean> {
+    const contentId = entry.info.contentId || '';
+    if (!task && !contentId) return false;
+    try {
+      const r = await removeTaskWithPayload({...this.toolsTarget(), task, contentId});
+      this.log.add(`remove download ${task ?? contentId}: stop ${hex(r.stop)}, unregister ${hex(r.unregister)}`);
+      // Not found by content ID: there is nothing left to remove.
+      return r.unregister === 0 || (!task && r.stop === TASK_NOT_FOUND);
+    } catch (e) {
+      this.log.add(`remove download ${task ?? contentId} failed: ${JSON.stringify(toErrorInfo(e))}`);
+      return false;
+    }
   }
 
   /** Reacts to what the PS4 log reports about downloads, installs and deletions. */
@@ -135,6 +180,7 @@ export class AppCore extends EventEmitter<{change: []}> {
     const {ps4Ip, ftpPort} = this.config.get();
     const next: Ps4Status = !ps4Ip ? 'unconfigured' : (await probeFtp(ps4Ip, ftpPort)) ? 'ready' : 'offline';
     if (next !== this.ps4) {
+      this.log.add(`ps4 ${ps4Ip || '-'} ${next}`);
       const cameOnline = next === 'ready' && this.ps4 !== 'checking';
       this.ps4 = next;
       this.emit('change');
@@ -194,6 +240,24 @@ export class AppCore extends EventEmitter<{change: []}> {
     return {installed: !!c, installedVersion: c?.version || null, newer: false};
   }
 
+  /**
+   * What "install all updates" sends: for each game on the PS4, the newest
+   * update in the library when it is newer than the installed one, and the
+   * DLCs it does not have yet.
+   */
+  private pendingUpdates(items: LibraryItem[]): string[] {
+    const active = new Set(this.queue.jobs.filter(j => ACTIVE_JOB_STATES.includes(j.state)).map(j => j.pkgId));
+    const usable = items.filter(i => !i.error && i.titleId && !active.has(i.id));
+    const newest = new Map<string, LibraryItem>();
+    for (const i of usable) {
+      if (i.kind !== 'patch' || !i.newer) continue;
+      const best = newest.get(i.titleId!);
+      if (!best || (i.version || '') > (best.version || '')) newest.set(i.titleId!, i);
+    }
+    const dlcs = usable.filter(i => i.kind === 'dlc' && i.installed === false && this.console.find(i.titleId!));
+    return [...newest.values(), ...dlcs].map(i => i.id);
+  }
+
   private publicItem(entry: LibraryEntry, all: LibraryEntry[]): LibraryItem {
     const {info} = entry;
     // Update PKGs usually have no icon; borrow the game's from the PC library.
@@ -222,19 +286,70 @@ export class AppCore extends EventEmitter<{change: []}> {
     const config = this.config.get();
     const entries = this.library.items;
     const language = this.language;
+    const library = entries
+      .map(e => this.publicItem(e, entries))
+      .sort((a, b) => a.title.localeCompare(b.title, language) || (b.version || '').localeCompare(a.version || ''));
+    const consoleState = this.console.state(language);
     return {
       config: {ps4Ip: config.ps4Ip, ftpPort: config.ftpPort, language: config.language, folders: config.folders},
       language,
       lanIp: lanIp(config.ps4Ip),
       ps4: this.ps4,
       scan: {...this.library.scan, missing: [...this.library.scan.missing]},
-      library: entries
-        .map(e => this.publicItem(e, entries))
-        .sort((a, b) => a.title.localeCompare(b.title, language) || (b.version || '').localeCompare(a.version || '')),
-      console: this.console.state(language),
+      library,
+      console: consoleState,
       jobs: this.queue.jobs.map(j => ({...j})),
-      payloads: {install: this.installPayload.available, uninstall: fs.existsSync(this.uninstallPayload)},
+      updates: consoleState.state === 'ready' ? this.pendingUpdates(library) : [],
+      klog: this.klog.status,
+      payloads: {install: this.installPayload.available, tools: fs.existsSync(this.toolsPayload)},
     };
+  }
+
+  /** Report for bug reports: versions, connections and recent events, without personal paths. */
+  diagnostics(about: Record<string, string>): string {
+    const state = this.getState();
+    const config = this.config.get();
+    const payload = (name: string) => {
+      const file = path.join(this.options.payloadDir, name);
+      return fs.existsSync(file) ? `${fs.statSync(file).size} bytes` : 'missing';
+    };
+    const jobs = state.jobs.map(j =>
+      [
+        `#${j.id} ${j.state}, attempt ${j.attempt}, ${j.transferred}/${j.total} bytes`,
+        j.taskId && `task ${j.taskId}`,
+        j.cleanup && `cleanup ${j.cleanup}`,
+        j.error && `${j.error.code} ${JSON.stringify(j.error.params ?? {})}`,
+      ]
+        .filter(Boolean)
+        .join(', '),
+    );
+    const kinds: Record<string, number> = {};
+    for (const i of state.library) kinds[i.kind] = (kinds[i.kind] ?? 0) + 1;
+    const c = state.console;
+    const lines = [
+      'PKG Sender diagnostics',
+      ...Object.entries(about).map(([k, v]) => `${k}: ${v}`),
+      `language: ${state.language}`,
+      '',
+      '[console]',
+      `ps4: ${config.ps4Ip || '-'} (${state.ps4}), ftp port ${config.ftpPort}`,
+      `pc lan ip: ${state.lanIp ?? '-'}, pkg server port ${this.server.port}`,
+      `ps4 log (klog): ${state.klog}`,
+      `console list: ${c.state}, ${c.items.length} titles${c.error ? `, error ${JSON.stringify(c.error)}` : ''}`,
+      `payloads: install.bin ${payload('install.bin')}, tools.bin ${payload('tools.bin')}`,
+      '',
+      '[library]',
+      `folders: ${config.folders.length} (${state.scan.missing.length} missing), files: ${config.files.length}, hidden: ${config.hidden.length}`,
+      `packages: ${state.library.length} ${JSON.stringify(kinds)}, unreadable: ${state.library.filter(i => i.error).length}`,
+      `pending updates: ${state.updates.length}`,
+      '',
+      '[jobs]',
+      ...(jobs.length ? jobs : ['none']),
+      '',
+      '[recent events]',
+      ...this.log.recent,
+    ];
+    return redactHome(lines.join('\n'));
   }
 
   // ---------- settings ----------
@@ -275,6 +390,21 @@ export class AppCore extends EventEmitter<{change: []}> {
   async setFolderRecursive(folder: string, recursive: boolean): Promise<void> {
     this.config.update({folders: this.config.get().folders.map(f => (f.path === folder ? {...f, recursive} : f))});
     await this.library.rescan();
+  }
+
+  /** Adds dropped paths: folders to the folder list, .pkg files one by one. */
+  async addPaths(paths: string[]): Promise<AddedPaths> {
+    const folders: string[] = [];
+    const files: string[] = [];
+    for (const p of paths) {
+      const stat = await fs.promises.stat(p).catch(() => null);
+      if (stat?.isDirectory()) folders.push(p);
+      else if (stat?.isFile() && p.toLowerCase().endsWith('.pkg')) files.push(p);
+    }
+    if (!folders.length && !files.length) throw new AppError('nothingToAdd');
+    const added = {folders: folders.length ? await this.addFolders(folders) : 0, files: 0};
+    if (files.length) added.files = await this.addFiles(files);
+    return added;
   }
 
   async addFiles(paths: string[]): Promise<number> {
@@ -322,6 +452,20 @@ export class AppCore extends EventEmitter<{change: []}> {
     this.queue.enqueue(id);
   }
 
+  /** Queues every pending update and DLC (AppState.updates); returns how many. */
+  installUpdates(): number {
+    let queued = 0;
+    for (const id of this.getState().updates) {
+      try {
+        this.queue.enqueue(id);
+        queued++;
+      } catch {
+        // Removed or queued meanwhile: skip it.
+      }
+    }
+    return queued;
+  }
+
   cancelJob(jobId: number): void {
     this.queue.cancel(jobId);
   }
@@ -342,11 +486,8 @@ export class AppCore extends EventEmitter<{change: []}> {
     const item = this.console.find(titleId);
     if (!item) throw new AppError('notOnConsole');
     if (what === 'patch' && !item.patchVersion) throw new AppError('noPatchInstalled');
-    if (!fs.existsSync(this.uninstallPayload)) throw new AppError('payloadMissing');
-    const {ps4Ip} = this.config.get();
-    const pcIp = lanIp(ps4Ip);
-    if (!pcIp) throw new AppError('noLan');
-    const r = await uninstallWithPayload({payloadPath: this.uninstallPayload, ps4Ip, pcIp, titleId, what});
+    const r = await uninstallWithPayload({...this.toolsTarget(), titleId, what});
+    this.log.add(`uninstall ${titleId} ${what}: init ${hex(r.init)}, result ${hex(r.result)}`);
     if (r.result) {
       throw new AppError(r.init ? 'uninstallRefusedInit' : 'uninstallRefused', {
         code: hex(r.result),

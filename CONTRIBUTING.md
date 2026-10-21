@@ -12,8 +12,10 @@ npm run dev
 Before opening a pull request:
 
 ```sh
-npm run lint && npm run typecheck && npm test
+npm run lint && npm run typecheck && npm test && npm run test:e2e
 ```
+
+`test:e2e` builds the app and drives its window with Playwright, using a temporary data folder and no PS4. On Linux without a display, run it under `xvfb-run -a`.
 
 ## Architecture
 

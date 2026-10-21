@@ -3,6 +3,7 @@
 import type {AppState} from '@shared/types';
 import {$, $$} from './dom';
 import {errorText, setLanguage, t} from './i18n';
+import {initNavigation} from './navigation';
 import {store, type Filter, type View} from './store';
 import {invalidateActivity, notifyTransitions, renderActivity} from './views/activity';
 import {invalidateConsole, renderConsole} from './views/console';
@@ -91,6 +92,17 @@ async function onAction(el: HTMLElement): Promise<void> {
       closeDetails();
       if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
       return void run(() => api.install(el.dataset.id!));
+    case 'installUpdates': {
+      if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
+      const queued = await run(() => api.installUpdates());
+      if (queued) toast(t('library.updatesQueued', {count: queued}), 'success');
+      return;
+    }
+    case 'copyDiagnostics':
+      if ((await run(() => api.copyDiagnostics().then(() => true))) === true) {
+        toast(t('settings.diagnosticsCopied'), 'success');
+      }
+      return;
     case 'cancelJob': {
       const job = state?.jobs.find(j => j.id === Number(el.dataset.job));
       const sending = job && job.state !== 'queued';
@@ -118,6 +130,53 @@ async function onAction(el: HTMLElement): Promise<void> {
     case 'saveFtpPort':
       return saveFtpPort();
   }
+}
+
+/** Closes the panel on top, as Escape does (not while it is deleting a game). */
+function closeTopDialog(): void {
+  const dialog = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);
+  if (dialog && !(dialog.id === 'uninstall' && isUninstalling())) dialog.close();
+}
+
+/** Adds folders and PKG files dropped on the window. */
+async function addDropped(files: FileList): Promise<void> {
+  const paths = [...files].map(f => api.pathForFile(f)).filter(Boolean);
+  if (!paths.length) return;
+  const added = await run(() => api.addPaths(paths));
+  if (!added) return;
+  if (added.folders) toast(t('library.foldersAdded', {count: added.folders}), 'success');
+  if (added.files) toast(t('library.filesAdded', {count: added.files}), 'success');
+  if (!added.folders && !added.files) toast(t('library.alreadyAdded'));
+  if (store.view !== 'pc') setView('pc');
+}
+
+function bindDrop(): void {
+  const overlay = $('#dropOverlay');
+  const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
+  // Counts nested enter/leave pairs: the overlay goes away only when leaving the window.
+  let depth = 0;
+  document.addEventListener('dragenter', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth++;
+    overlay.hidden = false;
+  });
+  document.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'copy';
+  });
+  document.addEventListener('dragleave', e => {
+    if (!hasFiles(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (!depth) overlay.hidden = true;
+  });
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    depth = 0;
+    overlay.hidden = true;
+    if (e.dataTransfer?.files.length) void addDropped(e.dataTransfer.files);
+  });
 }
 
 function setView(view: View): void {
@@ -164,6 +223,7 @@ function bindEvents(): void {
       if (!inside && !(dialog.id === 'uninstall' && isUninstalling())) dialog.close();
     });
   }
+  bindDrop();
 
   // Back to the window: refresh the console list if it is a while old
   // (games may have been installed or deleted on the PS4 meanwhile).
@@ -179,24 +239,26 @@ function bindEvents(): void {
     renderConsole();
   });
 
-  // Tiles work like the PS4 library: arrows move the focus, Enter opens the options.
+  // Tiles work like the PS4 library: Enter opens the options.
   document.addEventListener('keydown', e => {
     const card = (e.target as HTMLElement).closest?.<HTMLElement>('.card');
-    if (!card) return;
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (card && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       card.click();
-      return;
     }
-    const cards = [...card.parentElement!.querySelectorAll<HTMLElement>('.card')];
-    const i = cards.indexOf(card);
-    const cols = cards.filter(c => c.offsetTop === cards[0]!.offsetTop).length;
-    const next = (
-      {ArrowLeft: i - 1, ArrowRight: i + 1, ArrowUp: i - cols, ArrowDown: i + cols} as Record<string, number>
-    )[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    cards[next]?.focus();
+  });
+
+  initNavigation({
+    back: closeTopDialog,
+    // Two tabs: either shoulder button goes to the other one.
+    switchTab: () => {
+      if (!document.querySelector('dialog[open]')) setView(store.view === 'pc' ? 'ps4' : 'pc');
+    },
+    search: () => {
+      if (!document.querySelector('dialog[open]')) $<HTMLInputElement>('#search').focus();
+    },
+    settings: () => openSettings(),
+    onGamepad: connected => toast(t(connected ? 'nav.gamepadConnected' : 'nav.gamepadDisconnected')),
   });
 }
 

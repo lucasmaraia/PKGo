@@ -83,6 +83,10 @@
             </button>
           </div>
           <div class="actions" data-for="pc">
+            <button class="btn" data-action="installUpdates" id="installUpdates" hidden>
+              <svg viewBox="0 0 24 24"><path d="M12 19V7m0 0-5 5m5-5 5 5M5 4h14" /></svg>
+              <span id="installUpdatesLabel"></span>
+            </button>
             <button class="btn icon-only" data-action="rescan" data-i18n-title="library.rescan">
               <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" /></svg>
             </button>
@@ -149,6 +153,7 @@
           </div>
           <ul class="discovered" id="discovered"></ul>
           <p class="note" data-i18n="settings.goldhenNote"></p>
+          <p class="note" id="klogInfo"></p>
           <details class="advanced">
             <summary data-i18n="settings.advanced"></summary>
             <div class="field-row">
@@ -183,6 +188,15 @@
         <section class="settings-section about">
           <h3 data-i18n="settings.about"></h3>
           <p class="note" id="aboutText"></p>
+          <div class="field-row">
+            <button
+              class="btn"
+              type="button"
+              data-action="copyDiagnostics"
+              data-i18n="settings.copyDiagnostics"
+            ></button>
+            <span class="note" data-i18n="settings.diagnosticsHint"></span>
+          </div>
         </section>
       </form>
     </dialog>
@@ -202,6 +216,14 @@
         </div>
       </form>
     </dialog>
+
+    <div class="drop-overlay" id="dropOverlay" hidden>
+      <div>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+        <strong data-i18n="drop.title"></strong>
+        <span data-i18n="drop.hint"></span>
+      </div>
+    </div>
 
     <div class="toasts" id="toasts" aria-live="polite"></div>
     <script type="module" src="./src/main.ts"></script>

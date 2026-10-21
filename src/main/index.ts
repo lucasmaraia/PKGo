@@ -98,6 +98,9 @@ function runInBackground(win: BrowserWindow): void {
   tray.on('click', showWindow);
 }
 
+// Separate data folder, e.g. for the end-to-end tests.
+if (process.env.PKG_SENDER_USER_DATA) app.setPath('userData', process.env.PKG_SENDER_USER_DATA);
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {

@@ -146,7 +146,8 @@ strong {
   color: var(--muted);
 }
 .status:hover,
-.status:focus-visible {
+.status:focus-visible,
+.pad .status:focus {
   color: var(--text);
   background: rgba(255, 255, 255, 0.1);
 }
@@ -245,7 +246,12 @@ main {
   box-shadow: inset 3px 0 0 #fff;
 }
 .tab:focus-visible,
-.chip:focus-visible {
+.chip:focus-visible,
+.pad .tab:focus,
+.pad .chip:focus,
+.pad summary:focus,
+.pad a:focus,
+.pad .toggle input:focus {
   box-shadow: var(--glow);
 }
 .tab svg {
@@ -304,7 +310,8 @@ main {
 .btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
 }
-.btn:focus-visible {
+.btn:focus-visible,
+.pad .btn:focus {
   box-shadow: var(--glow);
   background: rgba(255, 255, 255, 0.2);
 }
@@ -383,7 +390,8 @@ main {
   transform: scale(1.04);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
 }
-.card:focus-visible .tile-art {
+.card:focus-visible .tile-art,
+.pad .card:focus .tile-art {
   transform: scale(1.06);
   box-shadow:
     var(--glow),
@@ -836,7 +844,8 @@ ul.folders {
   font-size: 16px;
 }
 .menu-item:hover:not(:disabled),
-.menu-item:focus-visible {
+.menu-item:focus-visible,
+.pad .menu-item:focus {
   background: rgba(255, 255, 255, 0.14);
   box-shadow: inset 3px 0 0 #fff;
 }
@@ -1193,4 +1202,49 @@ select option {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- drag and drop ---------- */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(1, 17, 61, 0.82);
+  pointer-events: none;
+}
+.drop-overlay > div {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 48px 64px;
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  text-align: center;
+}
+.drop-overlay svg {
+  width: 56px;
+  height: 56px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drop-overlay strong {
+  font-size: 22px;
+  font-weight: 300;
+}
+.drop-overlay span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- retries ---------- */
+.hero-info h2 .attempt {
+  margin-left: 8px;
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: 400;
 }

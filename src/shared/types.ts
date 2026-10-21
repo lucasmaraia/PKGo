@@ -52,6 +52,8 @@ export interface LibraryItem {
 
 export type JobState = 'queued' | 'starting' | 'installing' | 'done' | 'error' | 'cancelled';
 export const ACTIVE_JOB_STATES: readonly JobState[] = ['queued', 'starting', 'installing'];
+/** Tries per download: the first one plus automatic retries. */
+export const MAX_ATTEMPTS = 3;
 
 export interface Job {
   id: number;
@@ -66,6 +68,15 @@ export interface Job {
   eta: number | null;
   error: ErrorInfo | null;
   createdAt: number;
+  /** 1 on the first try; failed downloads are sent again a few times. */
+  attempt: number;
+  /** Waiting to be sent again (after a failed attempt) until this time. */
+  retryAt?: number;
+  /**
+   * Removing the stopped download from the PS4 list (and its notification):
+   * 'failed' means it is still there for the user to delete.
+   */
+  cleanup?: 'running' | 'done' | 'failed';
   /** The PS4 download task, once its log reports it. */
   taskId?: string;
   startedAt?: number;
@@ -105,6 +116,13 @@ export interface ConsoleState {
 
 export type Ps4Status = 'unconfigured' | 'checking' | 'offline' | 'ready';
 
+/**
+ * Connection to the PS4 log, which tells what happens to downloads as it
+ * happens. 'busy': another program is reading it (the PS4 serves one reader);
+ * 'unavailable': the log server does not answer (disabled in GoldHEN).
+ */
+export type KlogStatus = 'off' | 'connecting' | 'live' | 'busy' | 'unavailable';
+
 export interface ScanState {
   active: boolean;
   folders: number;
@@ -132,7 +150,15 @@ export interface AppState {
   library: LibraryItem[];
   console: ConsoleState;
   jobs: Job[];
-  payloads: {install: boolean; uninstall: boolean};
+  /** Library updates and DLCs missing on the PS4, for "install all" (ids). */
+  updates: string[];
+  klog: KlogStatus;
+  payloads: {install: boolean; tools: boolean};
+}
+
+export interface AddedPaths {
+  folders: number;
+  files: number;
 }
 
 export type UninstallTarget = 'game' | 'patch';
@@ -153,14 +179,22 @@ export interface Api {
   removeFolder(path: string): Promise<void>;
   setFolderRecursive(path: string, recursive: boolean): Promise<void>;
   addFiles(): Promise<number>;
+  /** Adds dropped folders and PKG files. */
+  addPaths(paths: string[]): Promise<AddedPaths>;
+  /** Path on disk of a dropped file (the renderer cannot read it itself). */
+  pathForFile(file: File): string;
   rescan(): Promise<void>;
   removeFromLibrary(id: string): Promise<void>;
   install(id: string): Promise<void>;
+  /** Queues every entry of AppState.updates; returns how many were queued. */
+  installUpdates(): Promise<number>;
   cancelJob(jobId: number): Promise<void>;
   clearFinished(): Promise<void>;
   refreshConsole(): Promise<void>;
   uninstall(titleId: string, what: UninstallTarget): Promise<void>;
   discover(): Promise<DiscoveredConsole[]>;
+  /** Copies a diagnostic report (versions, connections, recent events) to the clipboard. */
+  copyDiagnostics(): Promise<void>;
 }
 
 /** IPC replies carry errors as data: Electron drops custom fields of thrown errors. */

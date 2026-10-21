@@ -6,9 +6,11 @@
 // and an optional icon (u32 length + PNG). After registering the download it
 // reconnects for the next one; u32 0 makes it exit. See payloads/README.md.
 //
-// Uninstall: our payload (payloads/uninstall.c). It connects back, reads
-// u32 what (1 = game, 2 = update) + a 9-character title ID and answers with
-// two i32: the system init and uninstall results.
+// Tools: our payload (payloads/tools.c), one command per run. It connects
+// back, reads u32 command + its arguments and answers with two i32:
+//   1 game / 2 update uninstall + 9-character title ID: init and uninstall results
+//   3 remove a download task + i32 task ID (-1 = look up by content ID) +
+//     48-byte content ID: lookup/stop and unregister results
 import fs from 'node:fs';
 import net from 'node:net';
 import type {UninstallTarget} from '@shared/types';
@@ -175,22 +177,61 @@ export class InstallPayload {
   }
 }
 
+export interface ToolsTarget {
+  payloadPath: string;
+  ps4Ip: string;
+  pcIp: string;
+  loaderPorts?: number[];
+}
+
+/** The payload could not find the download task (tools.c TASK_NOT_FOUND). */
+export const TASK_NOT_FOUND = 0x8f000002 | 0;
+
 export interface UninstallResult {
   init: number;
   result: number;
 }
 
-/** Runs the uninstall payload once and returns the system results. */
-export async function uninstallWithPayload(options: {
-  payloadPath: string;
-  ps4Ip: string;
-  pcIp: string;
-  titleId: string;
-  what: UninstallTarget;
-  loaderPorts?: number[];
-}): Promise<UninstallResult> {
-  const {payloadPath, ps4Ip, pcIp, titleId, what, loaderPorts = LOADER_PORTS} = options;
+/** Uninstalls a game or its update and returns the system results. */
+export async function uninstallWithPayload(
+  options: ToolsTarget & {titleId: string; what: UninstallTarget},
+): Promise<UninstallResult> {
+  const {titleId, what} = options;
   if (!TITLE_ID.test(titleId)) throw new AppError('titleIdInvalid');
+  const [init, result] = await runTools(
+    options,
+    Buffer.concat([u32(what === 'patch' ? 2 : 1), Buffer.from(titleId, 'ascii')]),
+  );
+  return {init, result};
+}
+
+export interface RemoveTaskResult {
+  /** Looking up (TASK_NOT_FOUND) or stopping the task; stopping fails for tasks already ended. */
+  stop: number;
+  unregister: number;
+}
+
+/** The "remove download task" request: by task ID, or by content ID when the ID is unknown. */
+export function removeTaskMessage(task: string | null, contentId: string): Buffer {
+  const id = Buffer.alloc(4);
+  id.writeInt32LE(task ? parseInt(task, 16) | 0 : -1);
+  const content = Buffer.alloc(48);
+  content.write(contentId.slice(0, 47), 'ascii');
+  return Buffer.concat([u32(3), id, content]);
+}
+
+/** Removes a download from the PS4 download list (and its notification). */
+export async function removeTaskWithPayload(
+  options: ToolsTarget & {task: string | null; contentId: string},
+): Promise<RemoveTaskResult> {
+  const [stop, unregister] = await runTools(options, removeTaskMessage(options.task, options.contentId));
+  return {stop, unregister};
+}
+
+/** Runs the tools payload once with one command and returns its two results. */
+async function runTools(target: ToolsTarget, request: Buffer): Promise<[number, number]> {
+  const {payloadPath, ps4Ip, pcIp, loaderPorts = LOADER_PORTS} = target;
+  if (!fs.existsSync(payloadPath)) throw new AppError('payloadMissing');
   const server = net.createServer();
   await listen(server);
   try {
@@ -205,7 +246,7 @@ export async function uninstallWithPayload(options: {
     const port = (server.address() as net.AddressInfo).port;
     await sendToLoader(ps4Ip, patchPayload(fs.readFileSync(payloadPath), pcIp, port), loaderPorts);
     const sock = await connected;
-    return await new Promise<UninstallResult>((resolve, reject) => {
+    return await new Promise<[number, number]>((resolve, reject) => {
       const chunks: Buffer[] = [];
       sock.setTimeout(120000, () => sock.destroy(new AppError('payloadTimeout')));
       sock.on('data', (c: Buffer) => chunks.push(c));
@@ -213,9 +254,9 @@ export async function uninstallWithPayload(options: {
       sock.on('close', () => {
         const reply = Buffer.concat(chunks);
         if (reply.length < 8) return reject(new AppError('payloadNoReply'));
-        resolve({init: reply.readInt32LE(0), result: reply.readInt32LE(4)});
+        resolve([reply.readInt32LE(0), reply.readInt32LE(4)]);
       });
-      sock.write(Buffer.concat([u32(what === 'patch' ? 2 : 1), Buffer.from(titleId, 'ascii')]));
+      sock.write(request);
     });
   } finally {
     server.close();

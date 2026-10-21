@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds the GoldHEN payloads into resources/payloads/:
 #   install.bin    DirectPackageInstaller payload, from its sources pinned to a reviewed commit
-#   uninstall.bin  our uninstall.c + uninstall_net.c on the same payload template
+#   tools.bin      our tools.c + tools_net.c (uninstall, remove downloads) on the same payload template
 #
 # Needs Linux (or WSL / Docker with ubuntu:24.04) with:
 #   sudo apt-get install -y gcc make yasm git file python3 binutils
@@ -26,12 +26,12 @@ make -C "$WORK/Payload/lib"
 make -C "$WORK/Payload"
 cp "$WORK/Payload/payload.bin" "$OUT/install.bin"
 
-cp "$SRC/uninstall.c" "$SRC/uninstall_net.c" "$WORK/Payload/"
+cp "$SRC/tools.c" "$SRC/tools_net.c" "$WORK/Payload/"
 (cd "$WORK/Payload" &&
   gcc -g -mcmodel=small -isystem freebsd-headers -nostdinc -nostdlib -fno-stack-protector -static \
-    lib/lib.a uninstall.c uninstall_net.c ps4-libjbc/*.c -Wl,-gc-sections -o uninstall.elf -fPIE -ffreestanding &&
-  objcopy uninstall.elf --only-section .text --only-section .data --only-section .bss --only-section .rodata \
-    -O binary uninstall.bin)
-cp "$WORK/Payload/uninstall.bin" "$OUT/uninstall.bin"
+    lib/lib.a tools.c tools_net.c ps4-libjbc/*.c -Wl,-gc-sections -o tools.elf -fPIE -ffreestanding &&
+  objcopy tools.elf --only-section .text --only-section .data --only-section .bss --only-section .rodata \
+    -O binary tools.bin)
+cp "$WORK/Payload/tools.bin" "$OUT/tools.bin"
 
-for f in install.bin uninstall.bin; do echo "Built $OUT/$f ($(stat -c %s "$OUT/$f") bytes)"; done
+for f in install.bin tools.bin; do echo "Built $OUT/$f ($(stat -c %s "$OUT/$f") bytes)"; done

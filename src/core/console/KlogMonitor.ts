@@ -2,8 +2,13 @@
 // with our downloads as it happens: failures, cancels, installs, deletions.
 // It is best effort: without the log, the app falls back to timeouts and to
 // re-reading the console list.
+//
+// GoldHEN serves one reader at a time: a new connection closes the previous
+// one. When something else keeps taking the log, the monitor backs off
+// instead of fighting over it, and reconnects when a download needs it.
 import {EventEmitter} from 'node:events';
 import net from 'node:net';
+import type {KlogStatus} from '@shared/types';
 
 export const KLOG_PORT = 3232;
 
@@ -34,19 +39,44 @@ export function parseKlogLine(line: string): KlogEvent | null {
   return null;
 }
 
+export interface KlogTiming {
+  /** Wait before reconnecting after the connection drops or fails. */
+  retryMs: number;
+  /** Wait before reconnecting while another program reads the log. */
+  busyRetryMs: number;
+  /** Closed by the PS4 this many times within `kickWindowMs`: another reader. */
+  kicks: number;
+  kickWindowMs: number;
+}
+
+const TIMING: KlogTiming = {retryMs: 5000, busyRetryMs: 120_000, kicks: 2, kickWindowMs: 60_000};
+
 /** Keeps a connection to the klog of `host()` while it is set, reconnecting when it drops. */
-export class KlogMonitor extends EventEmitter<{event: [KlogEvent]}> {
+export class KlogMonitor extends EventEmitter<{event: [KlogEvent]; status: [KlogStatus]}> {
   private socket: net.Socket | null = null;
   private timer: NodeJS.Timeout | null = null;
-  private host = '';
   private running = false;
+  private kickTimes: number[] = [];
+  private _status: KlogStatus = 'off';
+  private readonly timing: KlogTiming;
 
   constructor(
     private readonly target: () => string,
     private readonly port = KLOG_PORT,
-    private readonly retryMs = 5000,
+    timing: Partial<KlogTiming> = {},
   ) {
     super();
+    this.timing = {...TIMING, ...timing};
+  }
+
+  get status(): KlogStatus {
+    return this._status;
+  }
+
+  private setStatus(status: KlogStatus): void {
+    if (status === this._status) return;
+    this._status = status;
+    this.emit('status', status);
   }
 
   start(): void {
@@ -57,30 +87,60 @@ export class KlogMonitor extends EventEmitter<{event: [KlogEvent]}> {
   stop(): void {
     this.running = false;
     if (this.timer) clearTimeout(this.timer);
-    this.socket?.destroy();
-    this.socket = null;
+    this.drop();
+    this.setStatus('off');
   }
 
-  /** Reconnects when the console address changes. */
+  /** Reconnects now: the console address changed. */
   restart(): void {
-    this.socket?.destroy();
+    this.kickTimes = [];
+    this.drop();
+    if (this.running) this.connect();
   }
 
-  private retry(): void {
+  /** A download starts and needs the log: take it back if another program had it. */
+  wake(): void {
+    if (this.running && !this.socket) {
+      this.kickTimes = [];
+      this.connect();
+    }
+  }
+
+  private drop(): void {
+    const socket = this.socket;
+    this.socket = null;
+    socket?.destroy();
+  }
+
+  private retry(delay: number): void {
     if (!this.running) return;
     if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.connect(), this.retryMs);
+    this.timer = setTimeout(() => this.connect(), delay);
   }
 
   private connect(): void {
-    this.host = this.target();
+    if (this.timer) clearTimeout(this.timer);
     if (!this.running) return;
-    if (!this.host) return this.retry();
-    const socket = net.connect(this.port, this.host);
+    const host = this.target();
+    if (!host) {
+      this.setStatus('off');
+      return this.retry(this.timing.retryMs);
+    }
+    if (this._status !== 'busy') this.setStatus('connecting');
+    const socket = net.connect(this.port, host);
     this.socket = socket;
     socket.setEncoding('utf8');
+    let connected = false;
+    let ended = false;
     let buffer = '';
+    socket.on('connect', () => {
+      connected = true;
+      // Busy until the log flows again: being kicked right away means it still is.
+      if (this._status !== 'busy') this.setStatus('live');
+    });
+    socket.on('end', () => (ended = true));
     socket.on('data', (chunk: string) => {
+      if (this._status === 'busy') this.setStatus('live');
       buffer += chunk;
       const lines = buffer.split(/\r?\n/);
       buffer = lines.pop() || '';
@@ -91,8 +151,24 @@ export class KlogMonitor extends EventEmitter<{event: [KlogEvent]}> {
     });
     socket.on('error', () => {});
     socket.on('close', () => {
-      if (this.socket === socket) this.socket = null;
-      this.retry();
+      // Closed by us (stop, restart): nothing to do.
+      if (this.socket !== socket) return;
+      this.socket = null;
+      if (!connected) {
+        this.setStatus('unavailable');
+        return this.retry(this.timing.retryMs);
+      }
+      if (ended) {
+        // The PS4 closed it: it does that when another reader connects.
+        const now = Date.now();
+        this.kickTimes = [...this.kickTimes.filter(t => now - t < this.timing.kickWindowMs), now];
+        if (this.kickTimes.length >= this.timing.kicks) {
+          this.setStatus('busy');
+          return this.retry(this.timing.busyRetryMs);
+        }
+      }
+      this.setStatus('connecting');
+      this.retry(this.timing.retryMs);
     });
   }
 }

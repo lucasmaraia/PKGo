@@ -28,6 +28,8 @@
   "nav.ps4": "No PS4",
   "nav.show": "Mostrar",
   "nav.settings": "Configurações",
+  "nav.gamepadConnected": "Controle conectado: use o direcional para navegar, ✕ para escolher, ○ para voltar e L1/R1 para trocar de aba.",
+  "nav.gamepadDisconnected": "Controle desconectado.",
 
   "filter.all": "Todos",
   "filter.game": "Jogos",
@@ -59,6 +61,9 @@
   "library.scanning": "Vasculhando pastas… {folders} pasta(s), {found} PKG(s)",
   "library.foldersAdded": "{count} pasta(s) adicionada(s) à biblioteca.",
   "library.filesAdded": "{count} PKG(s) adicionado(s).",
+  "library.installUpdates": "Instalar atualizações ({count})",
+  "library.updatesQueued": "{count} atualização(ões) e DLC(s) na fila.",
+  "library.alreadyAdded": "Esses itens já estavam na biblioteca.",
 
   "console.refresh": "Atualizar lista",
   "console.updating": "atualizando…",
@@ -88,7 +93,10 @@
   "jobs.ps4NotReady": "O PS4 não está respondendo agora. O pacote entrou na fila mesmo assim.",
   "jobs.cancel": "Cancelar envio",
   "jobs.cancelled": "Envio cancelado",
-  "jobs.cancelledToast": "O envio de {title} foi cancelado. O PS4 mostra o download como falho: apague-o nas notificações dele.",
+  "jobs.cancelledToast": "O envio de {title} foi cancelado.",
+  "jobs.retrying": "Nova tentativa em instantes ({attempt} de {max}). Motivo: {reason}",
+  "jobs.attempt": "tentativa {attempt} de {max}",
+  "jobs.leftOnPs4": "não foi possível tirar o download da lista do PS4: apague-o nas notificações dele",
 
   "details.installed": "Instalado no PS4 (v{version})",
   "details.notInstalled": "Não instalado",
@@ -149,6 +157,13 @@
   "settings.inUse": "Em uso",
   "settings.noneFound": "Nenhum PS4 encontrado. Verifique se ele está ligado e na mesma rede, ou digite o IP acima.",
   "settings.saved": "Configurações salvas.",
+  "settings.klog.connecting": "Conectando ao log do PS4…",
+  "settings.klog.live": "Acompanhando o PS4 em tempo real (falhas, cancelamentos e exclusões aparecem na hora).",
+  "settings.klog.busy": "Outro programa está lendo o log do PS4, e ele atende um leitor por vez. O PKG Sender o retoma ao começar um envio; até lá, as mudanças feitas no PS4 aparecem com atraso.",
+  "settings.klog.unavailable": "O log do PS4 (porta 3232) não responde: confira se o servidor Klog do GoldHEN está ativo. Sem ele, falhas e exclusões aparecem com atraso.",
+  "settings.copyDiagnostics": "Copiar diagnóstico",
+  "settings.diagnosticsHint": "Versões, conexões e eventos recentes, para anexar ao relatar um problema.",
+  "settings.diagnosticsCopied": "Diagnóstico copiado.",
 
   "errors.unexpected": "Algo deu errado ({detail}).",
   "errors.startFailed": "O PKG Sender não conseguiu iniciar: {detail}",
@@ -183,5 +198,9 @@
   "errors.jobNotActive": "Este envio já terminou.",
   "errors.ps4DownloadFailed": "O PS4 não conseguiu baixar o pacote (código {code}). Veja a notificação no PS4.",
   "errors.ps4Cancelled": "O download foi cancelado no PS4.",
-  "errors.installFailed": "O PS4 baixou o pacote, mas não conseguiu instalá-lo (código {code})."
+  "errors.installFailed": "O PS4 baixou o pacote, mas não conseguiu instalá-lo (código {code}).",
+  "errors.nothingToAdd": "Nada para adicionar: solte pastas ou arquivos .pkg.",
+
+  "drop.title": "Solte para adicionar à biblioteca",
+  "drop.hint": "Pastas entram na lista de pastas; arquivos .pkg são adicionados um a um."
 }

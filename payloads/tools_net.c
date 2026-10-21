@@ -1,4 +1,4 @@
-// Connection to the PC for uninstall.c, kept apart because the socket headers
+// Connection to the PC for tools.c, kept apart because the socket headers
 // clash with libjbc's types (the same split as DirectPackageInstaller's info.c).
 #include <sys/types.h>
 #include <sys/socket.h>
