@@ -5,7 +5,7 @@
   "description": "PKGo for PS4: install and manage PS4 packages over the network with GoldHEN, no installer app needed.",
   "license": "GPL-3.0-only",
   "author": "lucasmaraia",
-  "homepage": "https://github.com/lucasmaraia/pkgo",
+  "homepage": "https://github.com/lucasmaraia/PKGo",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
