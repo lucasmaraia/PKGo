@@ -71,6 +71,9 @@
   "library.clearSelection": "Desmarcar",
   "library.selectedQueued": "{count} paquete(s) en cola.",
   "library.deleteSelected": "Eliminar del PC ({count})",
+  "library.otherRegion": "Región distinta del juego en la PS4",
+  "library.otherRegionConfirm": "{title} es de una región distinta de la versión del juego instalada en la PS4 y no debería funcionar con ella. ¿Instalar de todos modos?",
+  "library.otherRegionSkipped": "{count} paquete(s) de región distinta del juego en la PS4 quedaron fuera.",
 
   "console.refresh": "Actualizar lista",
   "console.updating": "actualizando…",
@@ -123,6 +126,8 @@
   "details.storage": "Almacenamiento",
   "details.used": "Espacio ocupado",
   "details.deleteFromPc": "Eliminar del PC…",
+  "details.region": "Región",
+  "details.otherRegion": "Región distinta: la PS4 tiene la versión {region} de este juego ({titleId}). Este paquete es de otra versión y no debería funcionar con ella.",
 
   "storage.internal": "Interno",
   "storage.external": "Almacenamiento ampliado",
@@ -241,5 +246,10 @@
   "deleteFiles.done": "{count} paquete(s) movido(s) a la Papelera.",
   "deleteFiles.failed": "No se pudo mover a la Papelera: {path}",
   "deleteFiles.nothing": "Los archivos marcados ya no están en el PC.",
-  "deleteFiles.onlyBusy": "Los paquetes marcados se están enviando a la PS4: cancela el envío para eliminarlos."
+  "deleteFiles.onlyBusy": "Los paquetes marcados se están enviando a la PS4: cancela el envío para eliminarlos.",
+
+  "region.US": "EE. UU./América",
+  "region.EU": "Europa",
+  "region.JP": "Japón",
+  "region.ASIA": "Asia"
 }

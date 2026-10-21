@@ -7,6 +7,9 @@ export type Language = (typeof LANGUAGES)[number];
 
 export type PkgKind = 'game' | 'patch' | 'dlc' | 'app' | 'other';
 
+/** Region of a release, from its content ID (UP = Americas, EP = Europe…). */
+export type Region = 'US' | 'EU' | 'JP' | 'ASIA';
+
 /** An error code plus values to fill into its translated message. */
 export interface ErrorInfo {
   code: string;
@@ -46,6 +49,12 @@ export interface LibraryItem {
   /** Library item whose icon this one shows (updates borrow the game's). */
   iconId: string | null;
   hasPic: boolean;
+  region: Region | null;
+  /**
+   * An update or DLC made for another region's release of a game the PS4
+   * has (each release has its own title ID): it will not work on it.
+   */
+  conflict: {titleId: string; region: Region | null} | null;
   /** null = unknown: console list not loaded yet, or a DLC. */
   installed: boolean | null;
   installedVersion: string | null;
@@ -91,6 +100,9 @@ export type ConsoleStorage = 'internal' | 'external';
 export interface ConsoleItem {
   titleId: string;
   title: string;
+  /** From the installed game's PKG (its region and publisher). */
+  contentId: string | null;
+  region: Region | null;
   kind: PkgKind;
   baseVersion: string | null;
   patchVersion: string | null;

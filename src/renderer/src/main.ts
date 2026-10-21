@@ -88,11 +88,14 @@ async function onAction(el: HTMLElement): Promise<void> {
       return void run(() => api.rescan());
     case 'refreshConsole':
       return void run(() => api.refreshConsole());
-    case 'install':
+    case 'install': {
+      const item = state?.library.find(i => i.id === el.dataset.id);
+      if (item?.conflict && !confirm(t('library.otherRegionConfirm', {title: item.title}))) return;
       // Get the panel out of the way so the progress at the top is visible.
       closeDetails();
       if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
       return void run(() => api.install(el.dataset.id!));
+    }
     case 'installUpdates': {
       if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
       const queued = await run(() => api.installUpdates());
@@ -125,7 +128,10 @@ async function onAction(el: HTMLElement): Promise<void> {
       return renderSelection();
     case 'installSelected': {
       if (state && state.ps4 !== 'ready') toast(t('jobs.ps4NotReady'));
-      const queued = await run(() => api.installMany([...store.selected]));
+      // Packages for another region's release of a game on the PS4 would not work.
+      const conflicts = (state?.library ?? []).filter(i => store.selected.has(i.id) && i.conflict).map(i => i.id);
+      if (conflicts.length) toast(t('library.otherRegionSkipped', {count: conflicts.length}));
+      const queued = await run(() => api.installMany([...store.selected].filter(id => !conflicts.includes(id))));
       if (queued === undefined) return;
       store.selected.clear();
       renderSelection();

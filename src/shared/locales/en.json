@@ -71,6 +71,9 @@
   "library.clearSelection": "Uncheck",
   "library.selectedQueued": "{count} package(s) queued.",
   "library.deleteSelected": "Delete from PC ({count})",
+  "library.otherRegion": "Different region from the game on the PS4",
+  "library.otherRegionConfirm": "{title} is for a different region than the game release on the PS4 and should not work with it. Install anyway?",
+  "library.otherRegionSkipped": "{count} package(s) for a different region than the game on the PS4 were left out.",
 
   "console.refresh": "Refresh list",
   "console.updating": "refreshing…",
@@ -123,6 +126,8 @@
   "details.storage": "Storage",
   "details.used": "Space used",
   "details.deleteFromPc": "Delete from PC…",
+  "details.region": "Region",
+  "details.otherRegion": "Different region: the PS4 has the {region} release of this game ({titleId}). This package is for another release and should not work with it.",
 
   "storage.internal": "Internal",
   "storage.external": "Extended storage",
@@ -241,5 +246,10 @@
   "deleteFiles.done": "{count} package(s) moved to the trash.",
   "deleteFiles.failed": "Could not move to the trash: {path}",
   "deleteFiles.nothing": "The checked files are no longer on the PC.",
-  "deleteFiles.onlyBusy": "The checked packages are being sent to the PS4: cancel the sending to delete them."
+  "deleteFiles.onlyBusy": "The checked packages are being sent to the PS4: cancel the sending to delete them.",
+
+  "region.US": "USA/Americas",
+  "region.EU": "Europe",
+  "region.JP": "Japan",
+  "region.ASIA": "Asia"
 }

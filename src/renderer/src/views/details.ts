@@ -4,7 +4,7 @@ import {bytes, duration, esc} from '../format';
 import {errorText, t} from '../i18n';
 import {ICON} from '../icons';
 import {requireState} from '../store';
-import {consoleCover, cover, isActive, itemById, jobLabel, kindLabel, latestJob, percent} from './common';
+import {consoleCover, cover, isActive, itemById, jobLabel, kindLabel, latestJob, percent, regionLabel} from './common';
 
 type Target = {id: string} | {titleId: string};
 
@@ -66,15 +66,20 @@ function renderLibraryItem(id: string, body: HTMLElement): void {
     const bg = item.hasPic ? `app-media://pic/${item.id}` : item.hasIcon ? `app-media://icon/${item.iconId}` : '';
     const status = item.error
       ? errorText(item.error)
-      : item.installed
-        ? item.installedVersion
-          ? t('details.installed', {version: item.installedVersion})
-          : t('library.installedOnPs4')
-        : item.newer
-          ? t('library.newer', {version: item.installedVersion || ''})
-          : item.installed === false
-            ? t('details.notInstalled')
-            : '';
+      : item.conflict
+        ? t('details.otherRegion', {
+            region: item.conflict.region ? t(`region.${item.conflict.region}`) : '?',
+            titleId: item.conflict.titleId,
+          })
+        : item.installed
+          ? item.installedVersion
+            ? t('details.installed', {version: item.installedVersion})
+            : t('library.installedOnPs4')
+          : item.newer
+            ? t('library.newer', {version: item.installedVersion || ''})
+            : item.installed === false
+              ? t('details.notInstalled')
+              : '';
     const progress = active
       ? `<div class="d-progress"><div class="progress ${job.state === 'installing' ? '' : 'indeterminate'}"><span></span></div><span id="detailsProgress"></span></div>`
       : '';
@@ -95,9 +100,10 @@ function renderLibraryItem(id: string, body: HTMLElement): void {
         ${closeItem()}
       </div>` +
       infoList([
-        [t('details.status'), status, item.error ? 'error' : ''],
+        [t('details.status'), status, item.error ? 'error' : item.conflict ? 'warn' : ''],
         ['CUSA', item.titleId],
         ['Content ID', item.contentId],
+        [t('details.region'), regionLabel(item.region, item.contentId)],
         [t('details.version'), item.version && `v${item.version}`],
         [t('details.size'), bytes(item.size)],
         [t('details.firmware'), item.firmware],
@@ -141,6 +147,7 @@ function renderConsoleItem(titleId: string, body: HTMLElement): void {
     </div>` +
     infoList([
       ['CUSA', item.titleId],
+      [t('details.region'), regionLabel(item.region, item.contentId)],
       [t(item.kind === 'game' ? 'details.gameVersion' : 'details.version'), item.baseVersion && `v${item.baseVersion}`],
       [t('details.update'), item.patchVersion && `v${item.patchVersion}`],
       [t('details.dlcs'), item.dlcCount || ''],

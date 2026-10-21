@@ -26,6 +26,7 @@ import {KlogMonitor, type KlogEvent} from './console/KlogMonitor';
 import {ActivityLog, redactHome} from './diagnostics/ActivityLog';
 import {AppError, hex, toErrorInfo} from './errors';
 import {InstallQueue} from './install/InstallQueue';
+import {regionConflict, regionOf, type InstalledGame} from './library/compat';
 import {planDeletion, type DeleteTarget} from './library/DiskCleaner';
 import {LibraryService, pkgId, type LibraryEntry} from './library/LibraryService';
 import {discoverConsoles} from './network/discovery';
@@ -323,7 +324,7 @@ export class AppCore extends EventEmitter<{change: []}> {
    */
   private pendingUpdates(items: LibraryItem[]): string[] {
     const active = new Set(this.queue.jobs.filter(j => ACTIVE_JOB_STATES.includes(j.state)).map(j => j.pkgId));
-    const usable = items.filter(i => !i.error && i.titleId && !active.has(i.id));
+    const usable = items.filter(i => !i.error && i.titleId && !i.conflict && !active.has(i.id));
     const newest = new Map<string, LibraryItem>();
     for (const i of usable) {
       if (i.kind !== 'patch' || !i.newer) continue;
@@ -334,8 +335,25 @@ export class AppCore extends EventEmitter<{change: []}> {
     return [...newest.values(), ...dlcs].map(i => i.id);
   }
 
-  private publicItem(entry: LibraryEntry, all: LibraryEntry[]): LibraryItem {
+  /** Games on the PS4, for region checks; empty while the list is unknown. */
+  private installedGames(): InstalledGame[] {
+    if (this.console.state(this.language).state !== 'ready') return [];
+    return this.console.items
+      .filter(c => c.kind === 'game')
+      .map(c => ({titleId: c.titleId, contentId: c.contentId, names: Object.values(c.titles).filter(n => !!n)}));
+  }
+
+  private publicItem(entry: LibraryEntry, all: LibraryEntry[], installed: InstalledGame[]): LibraryItem {
     const {info} = entry;
+    const conflict = regionConflict(
+      {
+        kind: info.kind || 'other',
+        titleId: info.titleId || null,
+        contentId: info.contentId || null,
+        names: Object.values(info.titles ?? {}).filter((n): n is string => !!n),
+      },
+      installed,
+    );
     // Update PKGs usually have no icon; borrow the game's from the PC library.
     const iconFrom = info.icon ? entry : all.find(o => o.info.icon && o.info.titleId === info.titleId);
     return {
@@ -354,6 +372,8 @@ export class AppCore extends EventEmitter<{change: []}> {
       hasIcon: !!iconFrom,
       iconId: iconFrom?.id || null,
       hasPic: !!info.pic,
+      region: regionOf(info.contentId),
+      conflict,
       ...this.installState(entry),
     };
   }
@@ -362,8 +382,9 @@ export class AppCore extends EventEmitter<{change: []}> {
     const config = this.config.get();
     const entries = this.library.items;
     const language = this.language;
+    const installed = this.installedGames();
     const library = entries
-      .map(e => this.publicItem(e, entries))
+      .map(e => this.publicItem(e, entries, installed))
       .sort((a, b) => a.title.localeCompare(b.title, language) || (b.version || '').localeCompare(a.version || ''));
     const consoleState = this.console.state(language);
     return {

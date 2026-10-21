@@ -8,4 +8,5 @@ export const ICON = {
   trash: svg('<path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"/>'),
   close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
   folder: svg('<path d="M3 7h6l2 2h10v10H3z"/>'),
+  alert: svg('<path d="M12 4 2.5 20h19zM12 10v4M12 17.5v.01"/>'),
 };

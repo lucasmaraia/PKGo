@@ -71,6 +71,9 @@
   "library.clearSelection": "Desmarcar",
   "library.selectedQueued": "{count} pacote(s) na fila.",
   "library.deleteSelected": "Excluir do PC ({count})",
+  "library.otherRegion": "Região diferente do jogo no PS4",
+  "library.otherRegionConfirm": "{title} é de uma região diferente da versão do jogo instalada no PS4 e não deve funcionar nela. Instalar mesmo assim?",
+  "library.otherRegionSkipped": "{count} pacote(s) de região diferente do jogo no PS4 ficaram de fora.",
 
   "console.refresh": "Atualizar lista",
   "console.updating": "atualizando…",
@@ -123,6 +126,8 @@
   "details.storage": "Armazenamento",
   "details.used": "Espaço ocupado",
   "details.deleteFromPc": "Excluir do PC…",
+  "details.region": "Região",
+  "details.otherRegion": "Região diferente: no PS4 está a versão {region} deste jogo ({titleId}). Este pacote é de outra versão e não deve funcionar nela.",
 
   "storage.internal": "Interno",
   "storage.external": "Armazenamento estendido",
@@ -241,5 +246,10 @@
   "deleteFiles.done": "{count} pacote(s) movido(s) para a Lixeira.",
   "deleteFiles.failed": "Não foi possível mover para a Lixeira: {path}",
   "deleteFiles.nothing": "Os arquivos marcados não existem mais no PC.",
-  "deleteFiles.onlyBusy": "Os pacotes marcados estão sendo enviados ao PS4: cancele o envio para excluí-los."
+  "deleteFiles.onlyBusy": "Os pacotes marcados estão sendo enviados ao PS4: cancele o envio para excluí-los.",
+
+  "region.US": "EUA/Américas",
+  "region.EU": "Europa",
+  "region.JP": "Japão",
+  "region.ASIA": "Ásia"
 }

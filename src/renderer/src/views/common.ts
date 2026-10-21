@@ -1,9 +1,23 @@
-import {ACTIVE_JOB_STATES, type ConsoleItem, type Job, type LibraryItem, type PkgKind} from '@shared/types';
+import {
+  ACTIVE_JOB_STATES,
+  type ConsoleItem,
+  type Job,
+  type LibraryItem,
+  type PkgKind,
+  type Region,
+} from '@shared/types';
 import {esc, initials} from '../format';
 import {t} from '../i18n';
 import {store} from '../store';
 
 export const kindLabel = (kind: PkgKind): string => t(`kind.${kind}`);
+
+/** "Americas (UP9000)": region and the content ID's region/publisher part. */
+export function regionLabel(region: Region | null, contentId: string | null): string {
+  const code = /^[A-Z]{2}\d{4}/.exec(contentId || '')?.[0];
+  if (!region) return code || '';
+  return code ? `${t(`region.${region}`)} (${code})` : t(`region.${region}`);
+}
 
 export const percent = (job: Job): number => (job.total ? Math.min(100, (job.transferred / job.total) * 100) : 0);
 

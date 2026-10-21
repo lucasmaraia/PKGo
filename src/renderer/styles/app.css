@@ -1361,3 +1361,12 @@ body:not(.selecting) .pick,
 .delete-list li.more {
   color: var(--muted);
 }
+
+/* ---------- region conflicts ---------- */
+.flag.warn {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+.info dd.warn {
+  color: var(--warning);
+}

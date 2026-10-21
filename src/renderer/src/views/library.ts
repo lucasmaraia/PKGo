@@ -30,7 +30,7 @@ export function renderLibrary(): void {
   const key = JSON.stringify([
     store.filter,
     store.query,
-    items.map(i => [i.id, i.title, i.installed, i.installedVersion, i.newer, i.error, i.hasIcon]),
+    items.map(i => [i.id, i.title, i.installed, i.installedVersion, i.newer, i.error, i.hasIcon, i.conflict]),
   ]);
   if (key === gridKey) {
     renderTileProgress();
@@ -49,11 +49,13 @@ export function renderLibrary(): void {
           <input type="checkbox" data-action="toggleSelect" data-id="${i.id}" tabindex="-1" aria-label="${esc(t('library.select'))}" ${i.error ? 'disabled' : ''}>
         </label>
         ${
-          i.installed
-            ? `<span class="flag" title="${esc(t('library.installedOnPs4'))}">${ICON.check}</span>`
-            : i.newer
-              ? `<span class="flag newer" title="${esc(t('library.newerThanPs4'))}">${ICON.up}</span>`
-              : ''
+          i.conflict
+            ? `<span class="flag warn" title="${esc(t('library.otherRegion'))}">${ICON.alert}</span>`
+            : i.installed
+              ? `<span class="flag" title="${esc(t('library.installedOnPs4'))}">${ICON.check}</span>`
+              : i.newer
+                ? `<span class="flag newer" title="${esc(t('library.newerThanPs4'))}">${ICON.up}</span>`
+                : ''
         }
         <div class="tile-progress"></div>
       </div>
@@ -62,11 +64,13 @@ export function renderLibrary(): void {
       ${
         i.error
           ? `<div class="meta state error">${esc(t('library.unreadable'))}</div>`
-          : i.installed
-            ? `<div class="meta state">${esc(t('library.installed'))}${i.installedVersion ? ` · v${esc(i.installedVersion)}` : ''}</div>`
-            : i.newer
-              ? `<div class="meta state newer">${esc(t('library.newer', {version: i.installedVersion || ''}))}</div>`
-              : ''
+          : i.conflict
+            ? `<div class="meta state newer">${esc(t('library.otherRegion'))}</div>`
+            : i.installed
+              ? `<div class="meta state">${esc(t('library.installed'))}${i.installedVersion ? ` · v${esc(i.installedVersion)}` : ''}</div>`
+              : i.newer
+                ? `<div class="meta state newer">${esc(t('library.newer', {version: i.installedVersion || ''}))}</div>`
+                : ''
       }
     </article>`,
           )

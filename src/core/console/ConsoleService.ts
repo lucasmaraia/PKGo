@@ -5,6 +5,7 @@
 // version come from the installed PKG headers.
 import type {ConsoleItem, ConsoleState, ConsoleStorage, Language, PkgKind} from '@shared/types';
 import {AppError, toErrorInfo} from '../errors';
+import {regionOf} from '../library/compat';
 import {readPkgMeta, titleFor, type Titles} from '../pkg/PkgReader';
 import {FtpClient, FtpError, type FtpEntry} from './FtpClient';
 
@@ -27,6 +28,7 @@ export const STORAGES: Storage[] = [
 /** What is known about an installed title; cached while its PKG sizes stay the same. */
 interface TitleMeta {
   titles: Titles;
+  contentId: string | null;
   kind: PkgKind;
   baseVersion: string | null;
   patchVersion: string | null;
@@ -115,6 +117,7 @@ export async function readConsoleLibrary({host, port, cache, icons, onProgress}:
         const patch = patchSize && patchDir ? await pkgMeta(`${patchDir}/patch.pkg`, id) : null;
         meta = {
           titles: base?.titles || patch?.titles || {default: id},
+          contentId: base?.contentId || patch?.contentId || null,
           kind: base?.kind || 'app',
           baseVersion: base?.version || null,
           patchVersion: patch?.version || null,
@@ -133,6 +136,7 @@ export async function readConsoleLibrary({host, port, cache, icons, onProgress}:
       items.push({
         titleId: id,
         ...meta,
+        region: regionOf(meta.contentId),
         version: meta.patchVersion || meta.baseVersion,
         size: appSize + patchSize,
         appSize,
