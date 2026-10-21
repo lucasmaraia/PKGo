@@ -148,8 +148,11 @@ test('adds dropped folders and PKG files', async () => {
 
 test('checks tiles and queues them, games before updates', async () => {
   const cards = page.locator('#grid .card');
-  // The checkbox checks the tile without opening it.
-  await cards.first().locator('.pick').click();
+  // No checkboxes until selection mode is on.
+  await expect(cards.first().locator('.pick')).toBeHidden();
+  await page.locator('#selectMode').check();
+  // In selection mode a click checks the tile instead of opening it.
+  await cards.first().click();
   await expect(page.locator('#details')).toBeHidden();
   await expect(page.locator('#selectedCount')).toHaveText('1 checked');
   await expect(cards.first()).toHaveClass(/selected/);
@@ -165,6 +168,9 @@ test('checks tiles and queues them, games before updates', async () => {
   await expect(page.locator('#selectedCount')).toHaveText('3 checked');
   await page.locator('[data-action="installSelected"]').click();
   await expect(page.locator('#selectedCount')).toHaveText('');
+  // Leaving selection mode hides the checkboxes again.
+  await page.locator('#selectMode').uncheck();
+  await expect(cards.first().locator('.pick')).toBeHidden();
   const order = await page.evaluate(async () => {
     const s = await window.api.getState();
     return s.jobs.map(j => s.library.find(i => i.id === j.pkgId)!.kind);

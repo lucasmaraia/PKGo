@@ -87,10 +87,11 @@ export function renderSelection(): void {
     const box = card.querySelector<HTMLInputElement>('.pick input');
     if (box) box.checked = on;
   }
-  document.body.classList.toggle('selecting', store.selected.size > 0);
+  document.body.classList.toggle('selecting', store.selecting);
 
   const bar = $('#selectBar');
   bar.hidden = store.view !== 'pc' || !state.library.length;
+  $<HTMLInputElement>('#selectMode').checked = store.selecting;
   const visible = visibleItems().filter(i => usable.has(i.id));
   const checked = visible.filter(i => store.selected.has(i.id)).length;
   const all = $<HTMLInputElement>('#selectAll');

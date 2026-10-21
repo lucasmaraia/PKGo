@@ -10,6 +10,8 @@ export const store = {
   view: (location.hash === '#ps4' ? 'ps4' : 'pc') as View,
   filter: 'all' as Filter,
   query: '',
+  /** Selection mode: tiles show checkboxes and a click checks them. */
+  selecting: false,
   /** Library items checked for "install selected". */
   selected: new Set<string>(),
 };

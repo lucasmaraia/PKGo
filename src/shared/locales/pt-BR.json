@@ -64,6 +64,7 @@
   "library.updatesQueued": "{count} atualização(ões) e DLC(s) na fila.",
   "library.alreadyAdded": "Esses itens já estavam na biblioteca.",
   "library.select": "Marcar para instalar",
+  "library.selectMode": "Selecionar",
   "library.selectAll": "Marcar todos",
   "library.selectedCount": "{count} marcado(s)",
   "library.installSelected": "Instalar marcados ({count})",

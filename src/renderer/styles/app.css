@@ -1290,17 +1290,9 @@ select option {
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.55);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
 }
-/* Shown on hover and focus, and on every tile once something is checked. */
-.card:hover .pick,
-.card:focus-within .pick,
-.card:focus .pick,
-.selecting .pick,
-.card.selected .pick {
-  opacity: 1;
-}
+/* Only in selection mode ("Select" above the grid). */
+body:not(.selecting) .pick,
 .pick:has(input:disabled) {
   display: none;
 }

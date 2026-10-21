@@ -104,8 +104,13 @@ async function onAction(el: HTMLElement): Promise<void> {
       else store.selected.delete(id);
       return renderSelection();
     }
+    case 'selectMode':
+      store.selecting = (el as HTMLInputElement).checked;
+      if (!store.selecting) store.selected.clear();
+      return renderSelection();
     case 'selectAll': {
       const visible = visibleItems().filter(i => !i.error);
+      store.selecting = true;
       if ((el as HTMLInputElement).checked) for (const i of visible) store.selected.add(i.id);
       else for (const i of visible) store.selected.delete(i.id);
       return renderSelection();
@@ -204,12 +209,13 @@ function bindDrop(): void {
 }
 
 /** Checkboxes: handled on "change", never as clicks. */
-const CHECKBOX_ACTIONS = new Set(['toggleRecursive', 'toggleSelect', 'selectAll']);
+const CHECKBOX_ACTIONS = new Set(['toggleRecursive', 'toggleSelect', 'selectAll', 'selectMode']);
 
-/** Checks or unchecks a library tile (Space, or Square on a controller). */
+/** Checks or unchecks a library tile, turning selection mode on if needed. */
 function toggleTile(card: HTMLElement): void {
   const box = card.querySelector<HTMLInputElement>('.pick input');
   if (!box || box.disabled) return;
+  store.selecting = true;
   box.checked = !box.checked;
   void onAction(box);
 }
@@ -241,7 +247,9 @@ function bindEvents(): void {
     } else if (el.classList.contains('chip')) setFilter(el.dataset.kind as Filter);
     else if (el.dataset.view) setView(el.dataset.view as View);
     else if (el.classList.contains('card')) {
-      openDetails(el.dataset.id ? {id: el.dataset.id} : {titleId: el.dataset.title!});
+      // In selection mode a PC tile is checked instead of opened, like a phone gallery.
+      if (store.selecting && el.dataset.id) toggleTile(el);
+      else openDetails(el.dataset.id ? {id: el.dataset.id} : {titleId: el.dataset.title!});
     }
   });
   document.addEventListener('change', e => {
